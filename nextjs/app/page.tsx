@@ -32,18 +32,20 @@ export default function Home() {
 
       <section className="hero-section" id="top">
         <div className="hero-copy">
-          <p className="eyebrow">One powerful word every day</p>
-          <h1>A sharper vocabulary, built quietly.</h1>
+          <p className="eyebrow">Vocabulary for people who choose their words carefully</p>
+          <h1>Learn one word a day that you will actually use.</h1>
           <p className="hero-lede">
-            Verbsy helps you learn precise, memorable words through daily
-            reading, clean review, and calm Home Screen and Lock Screen widgets.
+            Verbsy teaches precise, memorable words with short daily lessons,
+            gentle review, and minimal widgets for your Home Screen and Lock
+            Screen.
           </p>
           <div className="hero-actions">
             <AppStoreModalButton />
             <a className="secondary-link" href="#features">
-              See how it works
+              Preview the app
             </a>
           </div>
+          <p className="launch-note">iPhone only. App Store launch coming soon.</p>
         </div>
 
         <div className="phone-stage" aria-label="Verbsy app preview">
@@ -77,35 +79,47 @@ export default function Home() {
 
       <section className="feature-band" id="features">
         <div className="section-heading">
-          <p className="eyebrow">Built for recall</p>
-          <h2>Small enough to keep. Useful enough to matter.</h2>
+          <p className="eyebrow">Built for real recall</p>
+          <h2>A daily vocabulary habit that feels light, not academic.</h2>
         </div>
         <div className="feature-grid">
           <article>
             <span className="feature-icon">01</span>
-            <h3>Daily words with context</h3>
+            <h3>Understand the word in seconds</h3>
             <p>
-              Learn the definition, pronunciation, example, and when the word
-              actually fits.
+              See the meaning, pronunciation, example, tone, and the kind of
+              moment where the word belongs.
             </p>
           </article>
           <article>
             <span className="feature-icon">02</span>
-            <h3>Review that makes words stick</h3>
+            <h3>Move from recognition to usage</h3>
             <p>
-              Quick recall prompts help turn words you recognize into words you
-              can use.
+              Quick review prompts help you remember what a word means and
+              when you would naturally say it.
             </p>
           </article>
           <article>
             <span className="feature-icon">03</span>
-            <h3>A library worth browsing</h3>
+            <h3>Browse words by how they feel</h3>
             <p>
-              Explore words across psychology, writing, communication,
-              philosophy, productivity, and emotion.
+              Explore vocabulary for psychology, writing, communication,
+              philosophy, productivity, emotion, and self-improvement.
             </p>
           </article>
         </div>
+      </section>
+
+      <section className="proof-band" aria-label="Why Verbsy">
+        <div>
+          <p className="eyebrow">Why it works</p>
+          <h2>Most vocabulary apps teach too much at once. Verbsy keeps the habit small.</h2>
+        </div>
+        <p>
+          One word. A clear example. A fast review. A quiet reminder where you
+          already look every day. That is enough to make better words familiar
+          without turning vocabulary into another task.
+        </p>
       </section>
 
       <section className="word-strip" aria-label="Sample words">
@@ -120,7 +134,7 @@ export default function Home() {
       <section className="widgets-section" id="widgets">
         <div className="section-heading">
           <p className="eyebrow">Home and Lock Screen widgets</p>
-          <h2>Keep a better word where you will actually see it.</h2>
+          <h2>Put today&apos;s word where your day already starts.</h2>
         </div>
         <div className="widget-showcase">
           <div className="widget-card paper">
@@ -142,7 +156,10 @@ export default function Home() {
 
       <section className="final-cta">
         <p className="eyebrow">Verbsy for iPhone</p>
-        <h2>Make your vocabulary feel more precise every day.</h2>
+        <h2>Build a vocabulary that makes your thoughts easier to say.</h2>
+        <p>
+          Daily words, focused review, and calm widgets in one clean iOS app.
+        </p>
         <AppStoreModalButton />
       </section>
 
