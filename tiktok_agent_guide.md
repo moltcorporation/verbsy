@@ -20,22 +20,31 @@ Use lowercase, hyphenated folder names. Keep slide filenames sequential: `slide1
 
 Track every vocabulary word used in `tiktoks/used-words.txt`. Before making a new post, check that file and avoid duplicate words. After generating a post, append each new vocabulary word in lowercase, one word per line, and keep the list alphabetized.
 
+Track each finished post concept in `tiktoks/used-post-concepts.txt`, one line
+per post. Include the date, folder slug, hook, and word set. Reusing a strong
+word later is acceptable; repeating an entire hook/topic/word set is not.
+
 ## Image generation flow
 
-Use the Moltcorp CLI image tools.
+Use the Moltcorp CLI image tools for visual assets.
 
-1. Generate draft slides in 4:5 aspect ratio with Gemini:
+1. Generate draft slides in 9:16 portrait ratio with Gemini. Use a 1080x1920 final canvas for TikTok photo mode so slides fill the screen without black bars or avoidable cropping:
 
 ```bash
 moltcorp generate-image \
   --model google/gemini-3-pro-image \
-  --aspect-ratio 4:5 \
+  --aspect-ratio 9:16 \
   --prompt "<prompt>" \
   --output-file tiktoks/<post-folder>/slide1.png
 ```
 
-2. Review the draft slides visually.
-3. Only after the slides are approved, upscale each image:
+2. Review the draft visually.
+3. For text-heavy vocabulary posts, prefer generating one strong 9:16 base slide
+   and rendering the hook/word text locally with code. This keeps spelling,
+   pronunciations, definitions, and layout consistent. The current local renderer
+   is `nextjs/scripts/generate-verbsy-tiktoks.mjs`.
+4. Verify the final local file is a PNG or JPG under 20MB at 1080x1920. If the model returns a different 9:16-ish size, normalize the approved slide to a 1080x1920 output before upload.
+5. Only after the slides are approved, upscale each image when needed:
 
 ```bash
 moltcorp generate-image upscale \
@@ -47,7 +56,9 @@ Do not upscale unreviewed drafts. Upscaling is the final pass for approved image
 
 ## Visual system
 
-Every slide should use one of the approved base slides as a reference image. The base slide creates consistency within a post while allowing the account to test different visual styles across posts.
+Every slide should use an approved 9:16 base slide as the visual foundation.
+The base slide creates consistency within a post while allowing the account to
+test different visual styles across posts.
 
 Base-slide selection rules:
 
@@ -57,7 +68,14 @@ Base-slide selection rules:
 4. When making a batch of posts, either use the operator's requested base slide for the whole batch or rotate base slides between posts. Do not mix base slides inside one post.
 5. Early testing should use a small number of posts per base slide so performance can be compared cleanly.
 
-Prompt the image model to keep the base-slide background, lighting, palette, and watermark intact, then place the new slide text on top. Text should be vertically centered, left aligned, and use the same bold editorial type style across the whole slideshow. Keep generous margins so the text survives TikTok cropping.
+If using image generation for individual slides, prompt the image model to keep
+the base-slide background, lighting, palette, and watermark intact, then place
+the new slide text on top. If rendering locally, keep the same constraints:
+text should be vertically centered, left aligned, and use the same bold
+editorial type style across the whole slideshow. Keep generous margins so the
+text survives TikTok UI overlays. Use high contrast and large mobile-readable
+type, with primary slide text no smaller than roughly 36pt on a 1080x1920
+canvas.
 
 The base slide should include a small watermark in the bottom-left corner:
 
@@ -123,3 +141,39 @@ For the feelings you could never quite name. #vocabulary #wordoftheday #learnont
 ```
 
 Do not over-explain the post in the caption. The slideshow should carry the content.
+
+Prefer captions that feel short, sweet, and authentic. Use 2-5 relevant hashtags,
+not broad filler tags.
+
+## TokPortal scheduling
+
+Use TokPortal carousel posts for both TikTok and Instagram.
+
+- TikTok: `video_type` should be `carousel`; include `carousel_images`,
+  `description`, `target_publish_date`, and `tiktok_sound_url`.
+- Instagram: `video_type` should be `carousel` and `instagram_content_type`
+  should be `reel` for fixed-photo Reels. Include `instagram_audio_name` when a
+  sound is requested.
+- Do not use generic Instagram `post` carousels for Verbsy slideshow content;
+  use Instagram Reels (`instagram_content_type: "reel"`) so the content lands in
+  the Reels format.
+- TokPortal upload responses include both storage paths and public URLs. If
+  configuration rejects storage paths as invalid URLs, retry with the returned
+  public URLs; TokPortal will store the final accepted value internally.
+
+## Sound rotation
+
+For TikTok carousel posts, rotate these sound URLs:
+
+- `https://www.tiktok.com/music/snowfall-7043672073613936641`
+- `https://www.tiktok.com/music/original-sound-7638927758885669645`
+- `https://www.tiktok.com/music/original-sound-7358684089900337925`
+- `https://www.tiktok.com/music/Beanie-Piano-Version-7473084138540157701`
+
+For Instagram Reels made through TokPortal, provide the matching audio name
+when available:
+
+- `snowfall - Øneheart & reidenshi`
+- `Original sound 7638927758885669645`
+- `Original sound 7358684089900337925`
+- `Beanie - Piano Version - Penguin Piano`
