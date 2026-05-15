@@ -10,14 +10,35 @@ export default function TermsPage() {
           educational use.
         </p>
         <p>
-          Verbsy Pro subscriptions are billed through Apple. Subscriptions renew
-          automatically unless canceled at least 24 hours before the end of the
-          current period. You can manage or cancel your subscription in your App
-          Store account settings.
+          Verbsy Pro is an auto-renewable subscription available in weekly,
+          monthly, and annual durations. The subscription unlocks Pro features
+          including widgets, review, topic browsing, saved words, and the full
+          vocabulary archive.
+        </p>
+        <p>
+          Subscriptions are billed through Apple. The full renewal price is shown
+          in the purchase flow before purchase. Subscriptions renew automatically
+          unless canceled at least 24 hours before the end of the current period.
+          Your Apple Account will be charged for renewal within 24 hours before
+          the end of the current period. You can manage or cancel your
+          subscription in your App Store account settings.
+        </p>
+        <p>
+          Purchases are final except as required by Apple policies or applicable
+          law. If you need a refund, use Apple&apos;s Report a Problem flow or App
+          Store purchase history.
         </p>
         <p>
           Vocabulary content is educational and should not be treated as
           professional, medical, legal, or psychological advice.
+        </p>
+        <p>
+          Verbsy content, design, and branding are owned by Verbsy or its
+          licensors. You may use the app for personal, non-commercial learning.
+        </p>
+        <p>
+          Verbsy is provided as available. We may update, add, or remove content
+          and features as the product improves.
         </p>
         <p>
           For support, contact support@verbsy.app.

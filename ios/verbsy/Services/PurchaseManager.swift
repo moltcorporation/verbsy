@@ -14,6 +14,7 @@ final class PurchaseManager: ObservableObject {
     @Published private(set) var isPro = false
     @Published var statusMessage: String?
     @Published var isPurchasing = false
+    @Published private(set) var isLoadingProducts = false
 
     private let localDebugProKey = "verbsy.localDebugPro"
     private var updatesTask: Task<Void, Never>?
@@ -35,6 +36,11 @@ final class PurchaseManager: ObservableObject {
     }
 
     func loadProducts() async {
+        if products.isEmpty {
+            isLoadingProducts = true
+        }
+        defer { isLoadingProducts = false }
+
         do {
             products = try await Product.products(for: Self.productIds)
                 .sorted { lhs, rhs in
@@ -43,7 +49,11 @@ final class PurchaseManager: ObservableObject {
                     return left < right
                 }
             if products.isEmpty {
+#if DEBUG
                 statusMessage = "Local StoreKit products are not active for this run."
+#else
+                statusMessage = "Subscription options are loading. Please try again in a moment."
+#endif
             }
         } catch {
             statusMessage = "Subscription options are unavailable: \(error.localizedDescription)"

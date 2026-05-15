@@ -36,6 +36,7 @@ struct StorePaywallView: View {
                 }
 
                 VStack(spacing: 12) {
+#if DEBUG
                     if purchases.products.isEmpty {
                         StaticPlanRow(title: "Annual", price: "$29.99 / year", badge: "Best value", isSelected: selectedProductId == "verbsy.pro.annual") {
                             selectedProductId = "verbsy.pro.annual"
@@ -58,6 +59,32 @@ struct StorePaywallView: View {
                             }
                         }
                     }
+#else
+                    if purchases.products.isEmpty {
+                        VStack(spacing: 12) {
+                            ProgressView()
+                                .tint(VerbsyDesign.ink)
+                            Text("Loading subscription options...")
+                                .font(.system(size: 16, weight: .bold, design: .rounded))
+                                .foregroundStyle(VerbsyDesign.muted)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(28)
+                        .background(.white)
+                        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                    } else {
+                        ForEach(purchases.products, id: \.id) { product in
+                            StaticPlanRow(
+                                title: title(for: product),
+                                price: price(for: product),
+                                badge: product.id == "verbsy.pro.annual" ? "Best value" : nil,
+                                isSelected: selectedProductId == product.id
+                            ) {
+                                selectedProductId = product.id
+                            }
+                        }
+                    }
+#endif
                 }
 
                 Button {
@@ -79,7 +106,7 @@ struct StorePaywallView: View {
                         }
                     }
                 } label: {
-                    Text(purchases.isPurchasing ? "Starting..." : "Continue")
+                    Text(primaryButtonTitle)
                         .font(.system(size: 21, weight: .black, design: .rounded))
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
@@ -88,7 +115,7 @@ struct StorePaywallView: View {
                         .clipShape(Capsule())
                 }
                 .buttonStyle(.plain)
-                .disabled(purchases.isPurchasing)
+                .disabled(isPrimaryButtonDisabled)
 
 #if DEBUG
                 if purchases.products.isEmpty {
@@ -157,10 +184,41 @@ struct StorePaywallView: View {
         .task { await purchases.loadProducts() }
     }
 
+    private var selectedProduct: Product? {
+        purchases.products.first { $0.id == selectedProductId }
+    }
+
+    private var primaryButtonTitle: String {
+        if purchases.isPurchasing { return "Starting..." }
+#if DEBUG
+        if purchases.products.isEmpty { return "Continue" }
+#else
+        if purchases.products.isEmpty { return "Loading..." }
+#endif
+        return "Subscribe to \(title(for: selectedProduct))"
+    }
+
+    private var isPrimaryButtonDisabled: Bool {
+        purchases.isPurchasing || (purchases.products.isEmpty && !isDebugBuild)
+    }
+
+    private var isDebugBuild: Bool {
+#if DEBUG
+        true
+#else
+        false
+#endif
+    }
+
     private func title(for product: Product) -> String {
         if product.id.contains("annual") { return "Annual" }
         if product.id.contains("monthly") { return "Monthly" }
         return "Weekly"
+    }
+
+    private func title(for product: Product?) -> String {
+        guard let product else { return "Pro" }
+        return title(for: product)
     }
 
     private func price(for product: Product) -> String {

@@ -26,6 +26,7 @@ export default function Home() {
         <div className="nav-links">
           <a href="#features">Features</a>
           <a href="#widgets">Widgets</a>
+          <a href="/support">Support</a>
           <a href="/privacy">Privacy</a>
         </div>
       </nav>
@@ -166,6 +167,7 @@ export default function Home() {
       <footer className="site-footer">
         <span>Verbsy</span>
         <div>
+          <a href="/support">Support</a>
           <a href="/terms">Terms</a>
           <a href="/privacy">Privacy</a>
         </div>

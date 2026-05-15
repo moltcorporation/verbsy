@@ -28,6 +28,7 @@ private struct TodayView: View {
     @EnvironmentObject private var progress: LocalProgressStore
     @Binding var showPaywall: Bool
     @State private var showLearnedConfirmation = false
+    @State private var showSettings = false
 
     private var isLearnedToday: Bool {
         progress.progress.learnedDates.contains(LocalProgress.key(for: Date()))
@@ -89,6 +90,24 @@ private struct TodayView: View {
             }
             .background(VerbsyDesign.background.ignoresSafeArea())
             .refreshable { await content.refresh() }
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        showSettings = true
+                    } label: {
+                        Image(systemName: "gearshape.fill")
+                            .font(.system(size: 17, weight: .bold))
+                            .foregroundStyle(VerbsyDesign.ink)
+                    }
+                    .accessibilityLabel("Settings")
+                }
+            }
+            .sheet(isPresented: $showSettings) {
+                SettingsView(showPaywall: $showPaywall)
+                    .environmentObject(purchases)
+                    .environmentObject(progress)
+                    .presentationDetents([.large])
+            }
         }
     }
 }
@@ -548,6 +567,164 @@ private struct ReviewQuestionCard: View {
         if choice.slug == question.word.slug { return VerbsyDesign.sage }
         if selectedSlug == choice.slug { return .red.opacity(0.7) }
         return VerbsyDesign.line
+    }
+}
+
+private struct SettingsView: View {
+    @EnvironmentObject private var purchases: PurchaseManager
+    @EnvironmentObject private var progress: LocalProgressStore
+    @Environment(\.dismiss) private var dismiss
+    @Binding var showPaywall: Bool
+    @State private var showResetConfirmation = false
+
+    var body: some View {
+        NavigationStack {
+            ScrollView(showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 22) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Settings")
+                            .font(.system(size: 36, weight: .black, design: .rounded))
+                            .foregroundStyle(VerbsyDesign.ink)
+                        Text("Manage Verbsy Pro, support, privacy, and local progress.")
+                            .font(.system(size: 17, weight: .medium, design: .rounded))
+                            .foregroundStyle(VerbsyDesign.muted)
+                    }
+
+                    settingsSection("Verbsy Pro") {
+                        SettingsRow(
+                            symbol: purchases.isPro ? "checkmark.seal.fill" : "sparkles",
+                            title: purchases.isPro ? "Verbsy Pro is active" : "Upgrade to Verbsy Pro",
+                            detail: purchases.isPro ? "Widgets, review, topics, and the full word archive are unlocked." : "Unlock widgets, review, topics, and the full word archive."
+                        ) {
+                            if !purchases.isPro {
+                                dismiss()
+                                showPaywall = true
+                            }
+                        }
+
+                        Button {
+                            Task { await purchases.restore() }
+                        } label: {
+                            SettingsRowContent(symbol: "arrow.clockwise", title: "Restore Purchases", detail: "Restore an existing App Store subscription.")
+                        }
+                        .buttonStyle(.plain)
+
+                        Link(destination: URL(string: "https://apps.apple.com/account/subscriptions")!) {
+                            SettingsRowContent(symbol: "person.crop.circle", title: "Manage Subscription", detail: "Open Apple subscription settings.")
+                        }
+                    }
+
+                    settingsSection("Support and legal") {
+                        Link(destination: URL(string: "https://verbsy.app/support")!) {
+                            SettingsRowContent(symbol: "questionmark.circle.fill", title: "Support", detail: "Contact support@verbsy.app.")
+                        }
+                        Link(destination: URL(string: "https://verbsy.app/privacy")!) {
+                            SettingsRowContent(symbol: "hand.raised.fill", title: "Privacy Policy", detail: "See how Verbsy handles data.")
+                        }
+                        Link(destination: URL(string: "https://verbsy.app/terms")!) {
+                            SettingsRowContent(symbol: "doc.text.fill", title: "Terms of Use", detail: "Review subscription and app terms.")
+                        }
+                    }
+
+                    settingsSection("Local progress") {
+                        Button(role: .destructive) {
+                            showResetConfirmation = true
+                        } label: {
+                            SettingsRowContent(symbol: "trash.fill", title: "Reset Progress", detail: "Clear saved words, learned words, streaks, and review history.")
+                        }
+                        .buttonStyle(.plain)
+                    }
+
+                    if let status = purchases.statusMessage {
+                        Text(status)
+                            .font(.system(size: 14, weight: .semibold, design: .rounded))
+                            .foregroundStyle(VerbsyDesign.muted)
+                            .frame(maxWidth: .infinity, alignment: .center)
+                            .multilineTextAlignment(.center)
+                    }
+                }
+                .padding(.horizontal, 24)
+                .padding(.vertical, 26)
+            }
+            .background(VerbsyDesign.background.ignoresSafeArea())
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") { dismiss() }
+                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                        .foregroundStyle(VerbsyDesign.ink)
+                }
+            }
+            .confirmationDialog("Reset local progress?", isPresented: $showResetConfirmation, titleVisibility: .visible) {
+                Button("Reset Progress", role: .destructive) {
+                    progress.resetAll()
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("This clears only data stored on this device.")
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func settingsSection<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(title)
+                .font(.system(size: 13, weight: .black, design: .rounded))
+                .foregroundStyle(VerbsyDesign.sage)
+                .textCase(.uppercase)
+
+            VStack(spacing: 0) {
+                content()
+            }
+            .background(.white)
+            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).stroke(VerbsyDesign.line))
+        }
+    }
+}
+
+private struct SettingsRow: View {
+    let symbol: String
+    let title: String
+    let detail: String
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            SettingsRowContent(symbol: symbol, title: title, detail: detail)
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+private struct SettingsRowContent: View {
+    let symbol: String
+    let title: String
+    let detail: String
+
+    var body: some View {
+        HStack(spacing: 14) {
+            Image(systemName: symbol)
+                .font(.system(size: 18, weight: .bold))
+                .foregroundStyle(VerbsyDesign.ink)
+                .frame(width: 38, height: 38)
+                .background(VerbsyDesign.panel)
+                .clipShape(Circle())
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.system(size: 17, weight: .black, design: .rounded))
+                    .foregroundStyle(VerbsyDesign.ink)
+                Text(detail)
+                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .foregroundStyle(VerbsyDesign.muted)
+                    .lineLimit(2)
+            }
+            Spacer()
+            Image(systemName: "chevron.right")
+                .font(.system(size: 13, weight: .black))
+                .foregroundStyle(VerbsyDesign.muted.opacity(0.45))
+        }
+        .padding(16)
     }
 }
 
