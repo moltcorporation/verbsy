@@ -169,6 +169,7 @@ For TikTok carousel posts, rotate these sound URLs:
 - `https://www.tiktok.com/music/original-sound-7638927758885669645`
 - `https://www.tiktok.com/music/original-sound-7358684089900337925`
 - `https://www.tiktok.com/music/Beanie-Piano-Version-7473084138540157701`
+-  `https://www.tiktok.com/music/som-original-7272542875887454981`
 
 For Instagram Reels made through TokPortal, provide the matching audio name
 when available:
@@ -177,3 +178,4 @@ when available:
 - `Original sound 7638927758885669645`
 - `Original sound 7358684089900337925`
 - `Beanie - Piano Version - Penguin Piano`
+- `som original WE ARE 00h.03m`

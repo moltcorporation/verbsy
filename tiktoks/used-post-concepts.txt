@@ -8,3 +8,13 @@
 2026-05-15 | stop-saying-very-angry-001 | Stop saying "very angry" | irate, choleric, apoplectic
 2026-05-15 | quiet-confidence-words-001 | 3 words for quiet confidence | sangfroid, aplomb, equanimity
 2026-05-15 | dangerously-articulate-words-001 | 3 words that sound dangerously articulate | trenchant, lucid, deft
+2026-05-15 | words-for-overthinking-at-night-001 | 3 words for overthinking at night | rumination, disquietude, catastrophize
+2026-05-15 | words-for-reading-the-room-001 | 3 words that help you read the room | tact, circumspect, rapport
+2026-05-15 | stop-saying-very-tired-001 | Stop saying "very tired" | enervated, languid, spent
+2026-05-15 | words-for-high-standards-001 | 3 words for people with high standards | fastidious, discerning, exacting
+2026-05-15 | feelings-after-a-hard-conversation-001 | 3 words for after a hard conversation | catharsis, contrition, closure
+2026-05-15 | words-that-feel-expensive-001 | 5 words that make you sound quietly expensive | urbane, refined, sartorial, suave, cosmopolitan
+2026-05-15 | words-for-the-main-character-delusion-001 | 3 words for your main character delusion | grandiloquent, vainglorious, quixotic
+2026-05-15 | words-for-when-someone-is-fake-deep-001 | 3 words for when someone is fake deep | specious, sententious, platitudinous
+2026-05-15 | words-for-being-too-online-001 | 3 words for being too online | reactionary, performative, polemical
+2026-05-15 | words-for-not-caring-anymore-001 | 3 words for when you stop caring | apathetic, disenchanted, blasé
