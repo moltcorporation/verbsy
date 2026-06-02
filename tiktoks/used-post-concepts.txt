@@ -18,3 +18,14 @@
 2026-05-15 | words-for-when-someone-is-fake-deep-001 | 3 words for when someone is fake deep | specious, sententious, platitudinous
 2026-05-15 | words-for-being-too-online-001 | 3 words for being too online | reactionary, performative, polemical
 2026-05-15 | words-for-not-caring-anymore-001 | 3 words for when you stop caring | apathetic, disenchanted, blasé
+2026-06-01 | words-for-social-exhaustion-001 | 3 words for social exhaustion | misanthropy, asocial, world-weary
+2026-06-01 | words-for-soft-power-001 | 3 words for quiet social power | gravitas, tactful, diplomatic
+2026-06-01 | words-for-hidden-resentment-001 | 3 words for resentment you try to hide | umbrage, rancor, sullen
+2026-06-01 | words-for-losing-yourself-001 | 3 words for when you start losing yourself | estrangement, alienation, dissociation
+2026-06-01 | words-for-subtle-jealousy-001 | 3 words for jealousy you would never admit | envy, covetous, begrudge
+2026-06-01 | words-that-make-you-sound-perceptive-001 | 5 words that make you sound painfully perceptive | astute, percipient, discerning, penetrating, shrewd
+2026-06-01 | words-for-when-the-vibe-shifts-001 | 3 words for when the vibe suddenly shifts | frisson, tension, portent
+2026-06-01 | stop-saying-awkward-001 | Stop saying "awkward" | ungainly, stilted, maladroit
+2026-06-01 | words-for-dangerous-charm-001 | 3 words for dangerous charm | beguiling, insinuating, seductive
+2026-06-01 | words-for-overexplaining-yourself-001 | 3 words for when you keep overexplaining | circumlocution, diffuse, apologetic
+2026-06-01 | words-that-make-you-sound-perceptive-001 | 5 words that make you sound painfully perceptive | astute, percipient, acuminous, penetrating, shrewd

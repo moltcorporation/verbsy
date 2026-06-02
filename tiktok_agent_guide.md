@@ -149,6 +149,16 @@ not broad filler tags.
 
 Use TokPortal carousel posts for both TikTok and Instagram.
 
+Current account pairs:
+
+- Verbsy: TikTok `verbsy.vocab` and Instagram `verbsy.vocab`.
+- Vocab Maxx: TikTok `vocabmaxx` and Instagram `vocab.maxx`.
+
+When making posts for multiple account pairs, each pair can receive the same
+post on its TikTok and Instagram accounts, but do not publish the same unique
+post to two accounts on the same platform. For example, `verbsy.vocab` TikTok
+and `vocabmaxx` TikTok should not receive the same carousel.
+
 - TikTok: `video_type` should be `carousel`; include `carousel_images`,
   `description`, `target_publish_date`, and `tiktok_sound_url`.
 - Instagram: `video_type` should be `carousel` and `instagram_content_type`
@@ -160,6 +170,18 @@ Use TokPortal carousel posts for both TikTok and Instagram.
 - TokPortal upload responses include both storage paths and public URLs. If
   configuration rejects storage paths as invalid URLs, retry with the returned
   public URLs; TokPortal will store the final accepted value internally.
+- If direct image upload reports the wrong MIME type, use
+  `tokportal_upload_image` to create a signed image upload URL, `curl -X PUT`
+  the local JPEG/PNG to that URL with the correct `Content-Type`, then configure
+  the slot with the returned `public_url`.
+- Keep `carousel_images` ordered exactly like the local files:
+  `slide1`, `slide2`, `slide3`, etc. `slide1` must be the hook.
+- Before configuring or publishing in TokPortal, pause for operator review of
+  the final local posts when the operator has not already approved them.
+- Schedule one post per day per account, starting with the next open allowed
+  date for that account. Existing-account video bundles should normally allow a
+  one-day delay, but if TokPortal rejects the date as too early, move to the
+  earliest accepted date and note the reason.
 
 ## Sound rotation
 
@@ -169,7 +191,7 @@ For TikTok carousel posts, rotate these sound URLs:
 - `https://www.tiktok.com/music/original-sound-7638927758885669645`
 - `https://www.tiktok.com/music/original-sound-7358684089900337925`
 - `https://www.tiktok.com/music/Beanie-Piano-Version-7473084138540157701`
--  `https://www.tiktok.com/music/som-original-7272542875887454981`
+- `https://www.tiktok.com/music/som-original-7272542875887454981`
 
 For Instagram Reels made through TokPortal, provide the matching audio name
 when available:
