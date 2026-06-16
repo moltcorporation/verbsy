@@ -29,6 +29,17 @@ struct LearnView: View {
                 await content.loadFeedPage(topics: prefs.selectedTopics, difficulties: prefs.effectiveDifficulties, reset: true)
             }
         }
+        .onChange(of: prefs.selectedTopics) { _, _ in reloadForPreferences() }
+        .onChange(of: prefs.difficulties) { _, _ in reloadForPreferences() }
+    }
+
+    /// Rebuild the feed + quiz when the user changes topics or difficulty so what
+    /// they see matches their preferences immediately.
+    private func reloadForPreferences() {
+        Task {
+            await content.loadFeedPage(topics: prefs.selectedTopics, difficulties: prefs.effectiveDifficulties, reset: true)
+            await content.loadQuizBatch(topics: prefs.selectedTopics, difficulties: prefs.effectiveDifficulties, reset: true)
+        }
     }
 }
 
@@ -263,22 +274,46 @@ private struct QuizCardView: View {
     @State private var selectedSlug: String?
 
     private var answered: Bool { selectedSlug != nil }
+    private var isFavorite: Bool { progress.isFavorite(item.word) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             Spacer(minLength: 0)
 
-            Eyebrow(text: "What does this mean?", color: VerbsyDesign.sage)
-            Text(item.word.word)
-                .font(VerbsyDesign.display(46))
-                .foregroundStyle(VerbsyDesign.ink)
-                .minimumScaleFactor(0.6)
-                .lineLimit(1)
-                .padding(.top, 6)
-            Text("\(item.word.pronunciation) · \(item.word.partOfSpeech)")
-                .font(.system(size: 16, weight: .semibold, design: .default))
-                .foregroundStyle(VerbsyDesign.muted)
-                .padding(.top, 4)
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Eyebrow(text: "What does this mean?", color: VerbsyDesign.sage)
+                    Text(item.word.word)
+                        .font(VerbsyDesign.display(46))
+                        .foregroundStyle(VerbsyDesign.ink)
+                        .minimumScaleFactor(0.6)
+                        .lineLimit(1)
+                        .padding(.top, 6)
+                    Text("\(item.word.pronunciation) · \(item.word.partOfSpeech)")
+                        .font(.system(size: 16, weight: .semibold, design: .default))
+                        .foregroundStyle(VerbsyDesign.muted)
+                        .padding(.top, 4)
+                }
+                Spacer(minLength: 8)
+                VStack(spacing: 10) {
+                    Button {
+                        Haptics.selection()
+                        progress.toggleFavorite(item.word)
+                    } label: {
+                        Image(systemName: isFavorite ? "heart.fill" : "heart")
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundStyle(isFavorite ? VerbsyDesign.onSage : VerbsyDesign.ink)
+                            .frame(width: 44, height: 44)
+                            .background(isFavorite ? VerbsyDesign.sage : VerbsyDesign.surface)
+                            .clipShape(Circle())
+                            .overlay(Circle().stroke(VerbsyDesign.line))
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(isFavorite ? "Remove favorite" : "Add favorite")
+
+                    WordShareButton(word: item.word, compact: true)
+                }
+            }
 
             VStack(spacing: 12) {
                 ForEach(item.options) { option in

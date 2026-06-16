@@ -6,7 +6,8 @@ struct HomeView: View {
 
     @Binding var showPaywall: Bool
     var openLearn: () -> Void
-    var openProfile: (ProfileRoute) -> Void
+
+    @State private var path: [ProfileRoute] = []
 
     private var greeting: String {
         let hour = Calendar.current.component(.hour, from: Date())
@@ -18,7 +19,7 @@ struct HomeView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: VerbsyDesign.sectionGap) {
                     HStack(alignment: .top) {
@@ -59,16 +60,16 @@ struct HomeView: View {
                         Eyebrow(text: "Your library")
                         LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
                             HomeTile(symbol: "heart.fill", title: "Favorites", value: "\(progress.progress.favoritesCount)", locked: false) {
-                                openProfile(.favorites)
+                                path.append(.favorites)
                             }
                             HomeTile(symbol: "square.grid.2x2.fill", title: "Topics", value: nil, locked: false) {
-                                openProfile(.topics)
+                                path.append(.topics)
                             }
                             HomeTile(symbol: "rectangle.on.rectangle.angled", title: "Widgets", value: nil, locked: false) {
-                                openProfile(.widgets)
+                                path.append(.widgets)
                             }
                             HomeTile(symbol: "bell.fill", title: "Daily word", value: nil, locked: !purchases.isPro) {
-                                purchases.isPro ? openProfile(.notifications) : (showPaywall = true)
+                                if purchases.isPro { path.append(.notifications) } else { showPaywall = true }
                             }
                         }
                     }
@@ -77,6 +78,9 @@ struct HomeView: View {
                 .padding(.vertical, 20)
             }
             .background(VerbsyDesign.background.ignoresSafeArea())
+            .navigationDestination(for: ProfileRoute.self) { destination in
+                ProfileDestinationView(route: destination, showPaywall: $showPaywall)
+            }
         }
     }
 }
@@ -94,7 +98,7 @@ private struct StreakHeroCard: View {
                     Text(progress.streak == 0 ? "Start your streak" : "\(progress.streak)-day streak")
                         .font(VerbsyDesign.display(26))
                         .foregroundStyle(VerbsyDesign.ink)
-                    Text(progress.streak == 0 ? "Learn \(LocalProgress.dailyGoal) words today" : "Keep it alive — learn \(LocalProgress.dailyGoal) a day")
+                    Text(streakSubtitle)
                         .font(.system(size: 14, weight: .medium, design: .default))
                         .foregroundStyle(VerbsyDesign.muted)
                 }
@@ -117,6 +121,13 @@ private struct StreakHeroCard: View {
         .clipShape(RoundedRectangle(cornerRadius: VerbsyDesign.radiusCard, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: VerbsyDesign.radiusCard, style: .continuous).stroke(VerbsyDesign.line))
         .shadow(color: .black.opacity(0.05), radius: 18, x: 0, y: 12)
+    }
+
+    private var streakSubtitle: String {
+        if progress.todaySeen >= LocalProgress.dailyGoal {
+            return progress.streak > 0 ? "Today’s word is done — see you tomorrow" : "Nice — you’ve started"
+        }
+        return progress.streak == 0 ? "Learn one word today to begin" : "One word a day keeps it alive"
     }
 
     private var accuracyText: String {

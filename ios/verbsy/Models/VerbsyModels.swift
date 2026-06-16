@@ -163,7 +163,8 @@ struct QuizEntry: Identifiable, Hashable {
 
 /// Locally-stored progress. No accounts — everything lives on device.
 struct LocalProgress: Codable {
-    static let dailyGoal = 5
+    // One new word a day keeps the streak alive — low-pressure, high-retention.
+    static let dailyGoal = 1
 
     var favoriteSlugs: Set<String> = []
     var seenSlugs: Set<String> = []            // every word fully viewed in the feed

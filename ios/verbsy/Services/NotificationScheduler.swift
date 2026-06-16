@@ -11,6 +11,11 @@ enum NotificationScheduler {
         (try? await center.requestAuthorization(options: [.alert, .badge, .sound])) ?? false
     }
 
+    /// Current system permission state, used to nudge users to enable in Settings.
+    static func authorizationStatus() async -> UNAuthorizationStatus {
+        await center.notificationSettings().authorizationStatus
+    }
+
     /// Schedule word-of-the-day notifications for the next stretch of days.
     /// iOS allows up to 64 pending notifications, so we cap and top up on launch.
     /// Each notification shows the word as the title and its short definition as

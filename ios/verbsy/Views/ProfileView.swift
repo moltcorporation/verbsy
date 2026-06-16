@@ -1,4 +1,6 @@
 import SwiftUI
+import UIKit
+import UserNotifications
 
 /// Deep-link targets used by Home tiles and Profile rows.
 enum ProfileRoute: Hashable {
@@ -17,7 +19,6 @@ struct ProfileView: View {
     @EnvironmentObject private var prefs: PreferencesStore
 
     @Binding var showPaywall: Bool
-    @Binding var route: ProfileRoute?
 
     @State private var path: [ProfileRoute] = []
     @State private var showResetConfirmation = false
@@ -37,9 +38,9 @@ struct ProfileView: View {
                     }
 
                     SettingsSection(title: "Daily habit") {
-                        navRow(.widgets, symbol: "rectangle.on.rectangle.angled", title: "Home Screen widgets", detail: "A word on your Home & Lock Screen")
+                        gatedRow(.notifications, symbol: "bell.fill", title: "Word of the day", detail: purchases.isPro ? "A push notification each morning" : "Verbsy Pro")
                         rowDivider
-                        gatedRow(.notifications, symbol: "bell.fill", title: "Word of the day", detail: purchases.isPro ? "A new word every morning" : "Verbsy Pro")
+                        navRow(.widgets, symbol: "rectangle.on.rectangle.angled", title: "Home Screen widgets", detail: "A word on your Home & Lock Screen")
                     }
 
                     SettingsSection(title: "Verbsy Pro") {
@@ -87,7 +88,7 @@ struct ProfileView: View {
             }
             .background(VerbsyDesign.background.ignoresSafeArea())
             .navigationDestination(for: ProfileRoute.self) { destination in
-                destinationView(destination)
+                ProfileDestinationView(route: destination, showPaywall: $showPaywall)
             }
             .confirmationDialog("Reset local progress?", isPresented: $showResetConfirmation, titleVisibility: .visible) {
                 Button("Reset Progress", role: .destructive) { progress.resetAll() }
@@ -95,11 +96,6 @@ struct ProfileView: View {
             } message: {
                 Text("This clears only data stored on this device.")
             }
-        }
-        .onChange(of: route) { _, newValue in
-            guard let newValue else { return }
-            path = [newValue]
-            route = nil
         }
     }
 
@@ -166,9 +162,16 @@ struct ProfileView: View {
         .buttonStyle(.pressable)
     }
 
-    @ViewBuilder
-    private func destinationView(_ destination: ProfileRoute) -> some View {
-        switch destination {
+}
+
+/// Shared detail builder so Home and Profile can each navigate to these screens
+/// inside their own navigation stack — so Back returns to the originating tab.
+struct ProfileDestinationView: View {
+    let route: ProfileRoute
+    @Binding var showPaywall: Bool
+
+    var body: some View {
+        switch route {
         case .favorites: FavoritesView()
         case .topics: TopicsPickerView()
         case .difficulty: DifficultyPickerView()
@@ -458,17 +461,24 @@ private struct WidgetsHelpView: View {
 private struct NotificationsSettingsView: View {
     @EnvironmentObject private var prefs: PreferencesStore
     @AppStorage("verbsy.wantsReminders") private var wantsReminders = false
+    @Environment(\.scenePhase) private var scenePhase
     @State private var reminderTime = Date()
+    @State private var authStatus: UNAuthorizationStatus = .notDetermined
 
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 14) {
+                Text("Get a push notification with a new word — delivered right to your Lock Screen.")
+                    .font(.system(size: 15, weight: .medium, design: .default))
+                    .foregroundStyle(VerbsyDesign.muted)
+                    .padding(.horizontal, 4)
+
                 Toggle(isOn: $wantsReminders) {
                     VStack(alignment: .leading, spacing: 3) {
                         Text("Word of the day")
                             .font(.system(size: 18, weight: .bold, design: .default))
                             .foregroundStyle(VerbsyDesign.ink)
-                        Text("New words delivered as a gentle daily push.")
+                        Text("A gentle daily push notification.")
                             .font(.system(size: 14, weight: .medium, design: .default))
                             .foregroundStyle(VerbsyDesign.muted)
                     }
@@ -478,6 +488,10 @@ private struct NotificationsSettingsView: View {
                 .background(VerbsyDesign.surface)
                 .clipShape(RoundedRectangle(cornerRadius: VerbsyDesign.radiusTile, style: .continuous))
                 .overlay(RoundedRectangle(cornerRadius: VerbsyDesign.radiusTile, style: .continuous).stroke(VerbsyDesign.line))
+
+                if wantsReminders && (authStatus == .denied) {
+                    permissionNudge
+                }
 
                 if wantsReminders {
                     VStack(spacing: 0) {
@@ -526,11 +540,18 @@ private struct NotificationsSettingsView: View {
             .padding(.horizontal, VerbsyDesign.pageGutter)
             .padding(.vertical, 18)
             .animation(.easeInOut(duration: 0.2), value: wantsReminders)
+            .animation(.easeInOut(duration: 0.2), value: authStatus)
         }
         .background(VerbsyDesign.background.ignoresSafeArea())
         .navigationTitle("Daily word")
         .navigationBarTitleDisplayMode(.inline)
-        .onAppear { reminderTime = timeFromPrefs() }
+        .onAppear {
+            reminderTime = timeFromPrefs()
+            refreshAuthStatus()
+        }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { refreshAuthStatus() }
+        }
         .onChange(of: wantsReminders) { _, on in
             if on { reschedule() } else { NotificationScheduler.cancelWordReminders() }
         }
@@ -543,8 +564,48 @@ private struct NotificationsSettingsView: View {
         }
     }
 
+    private var permissionNudge: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 10) {
+                Image(systemName: "bell.slash.fill")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundStyle(VerbsyDesign.gold)
+                Text("Notifications are turned off")
+                    .font(.system(size: 16, weight: .bold, design: .default))
+                    .foregroundStyle(VerbsyDesign.ink)
+            }
+            Text("Verbsy can’t send your word of the day until you allow notifications for Verbsy in iOS Settings.")
+                .font(.system(size: 14, weight: .medium, design: .default))
+                .foregroundStyle(VerbsyDesign.muted)
+                .fixedSize(horizontal: false, vertical: true)
+            Button {
+                Haptics.selection()
+                if let url = URL(string: UIApplication.openSettingsURLString) {
+                    UIApplication.shared.open(url)
+                }
+            } label: {
+                Text("Open Settings")
+                    .font(.system(size: 16, weight: .bold, design: .default))
+                    .foregroundStyle(VerbsyDesign.onSage)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 48)
+                    .background(VerbsyDesign.sage)
+                    .clipShape(Capsule())
+            }
+            .buttonStyle(.pressable)
+        }
+        .padding(18)
+        .background(VerbsyDesign.goldSoft)
+        .clipShape(RoundedRectangle(cornerRadius: VerbsyDesign.radiusTile, style: .continuous))
+        .transition(.opacity)
+    }
+
     private func timeFromPrefs() -> Date {
         Calendar.current.date(bySettingHour: prefs.reminderHour, minute: prefs.reminderMinute, second: 0, of: Date()) ?? Date()
+    }
+
+    private func refreshAuthStatus() {
+        Task { authStatus = await NotificationScheduler.authorizationStatus() }
     }
 
     private func reschedule() {
@@ -556,6 +617,7 @@ private struct NotificationsSettingsView: View {
                 topics: prefs.selectedTopics,
                 difficulties: prefs.effectiveDifficulties
             )
+            authStatus = await NotificationScheduler.authorizationStatus()
         }
     }
 }

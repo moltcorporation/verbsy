@@ -70,6 +70,8 @@ struct AppRootView: View {
             else if !isPro { NotificationScheduler.cancelWordReminders() }
             content.syncWidget(topics: prefs.selectedTopics, difficulties: prefs.effectiveDifficulties)
         }
+        .onChange(of: prefs.selectedTopics) { _, _ in propagatePreferences() }
+        .onChange(of: prefs.difficulties) { _, _ in propagatePreferences() }
         .task {
             await content.refresh()
             content.syncWidget(topics: prefs.selectedTopics, difficulties: prefs.effectiveDifficulties)
@@ -92,6 +94,13 @@ struct AppRootView: View {
                 difficulties: prefs.effectiveDifficulties
             )
         }
+    }
+
+    /// When topics/difficulty change, keep the widget pool and (Pro) reminder
+    /// words in sync with what the user now wants.
+    private func propagatePreferences() {
+        content.syncWidget(topics: prefs.selectedTopics, difficulties: prefs.effectiveDifficulties)
+        if purchases.isPro && wantsReminders { scheduleReminders() }
     }
 }
 
