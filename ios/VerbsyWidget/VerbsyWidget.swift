@@ -88,7 +88,10 @@ private struct VerbsyProvider: AppIntentTimelineProvider {
         let defaults = UserDefaults(suiteName: appGroup) ?? .standard
         let isPro = defaults.bool(forKey: "widget.isPro")
         let words = loadWords(defaults)
-        let interval = max(1, configuration.rotation.hours)
+        // The word widget works for everyone. Pro unlocks the chosen theme and a
+        // faster rotation; free widgets show a daily word in the default style.
+        let theme = isPro ? configuration.theme : .paper
+        let interval = isPro ? max(1, configuration.rotation.hours) : 24
         let calendar = Calendar.current
         let now = Date()
 
@@ -100,7 +103,7 @@ private struct VerbsyProvider: AppIntentTimelineProvider {
             let date = calendar.date(byAdding: .hour, value: i * interval, to: now) ?? now
             let bucket = Int(date.timeIntervalSince1970 / 3600) / interval
             let word = words[((bucket % words.count) + words.count) % words.count]
-            entries.append(VerbsyEntry(date: date, isPro: isPro, word: word, theme: configuration.theme))
+            entries.append(VerbsyEntry(date: date, isPro: isPro, word: word, theme: theme))
         }
         return Timeline(entries: entries, policy: .atEnd)
     }
@@ -138,44 +141,14 @@ private struct VerbsyWidgetView: View {
     let entry: VerbsyEntry
 
     var body: some View {
-        if entry.isPro {
-            proView
-                .widgetURL(URL(string: "verbsy://today"))
-        } else {
-            lockedView
-                .widgetURL(URL(string: "verbsy://paywall"))
-        }
-    }
-
-    private var proView: some View {
+        // Every widget shows a real word. Tapping opens the app for subscribers,
+        // or the paywall for free users (who get a daily word in the default style).
         content
             .foregroundStyle(palette.primary)
-        .containerBackground(for: .widget) {
-            palette.background
-        }
-    }
-
-    private var lockedView: some View {
-        VStack(alignment: .leading, spacing: family == .accessoryRectangular ? 2 : 7) {
-            Image(systemName: "crown.fill")
-                .font(.system(size: family == .accessoryRectangular ? 13 : 20, weight: .bold))
-                .foregroundStyle(palette.accent)
-            Text(family == .accessoryCircular ? "Pro" : "Unlock daily words")
-                .font(.system(size: lockTitleSize, weight: .black, design: .default))
-                .lineLimit(family == .accessoryRectangular ? 1 : 3)
-                .minimumScaleFactor(0.72)
-            if family != .accessoryCircular {
-                Text("Verbsy Pro")
-                    .font(.system(size: 11, weight: .bold, design: .default))
-                    .foregroundStyle(palette.secondary)
+            .containerBackground(for: .widget) {
+                palette.background
             }
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .padding(contentPadding)
-        .foregroundStyle(palette.primary)
-        .containerBackground(for: .widget) {
-            palette.background
-        }
+            .widgetURL(URL(string: entry.isPro ? "verbsy://today" : "verbsy://paywall"))
     }
 
     @ViewBuilder
@@ -345,19 +318,6 @@ private struct VerbsyWidgetView: View {
             0
         default:
             15
-        }
-    }
-
-    private var lockTitleSize: CGFloat {
-        switch family {
-        case .accessoryRectangular:
-            13
-        case .accessoryCircular:
-            12
-        case .accessoryInline:
-            12
-        default:
-            17
         }
     }
 

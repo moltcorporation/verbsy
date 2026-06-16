@@ -28,5 +28,6 @@ struct MainAppView: View {
                 .tag(2)
         }
         .tint(VerbsyDesign.sage)
+        .sensoryFeedback(.selection, trigger: selectedTab)
     }
 }

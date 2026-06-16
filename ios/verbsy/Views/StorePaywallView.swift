@@ -38,8 +38,8 @@ struct StorePaywallView: View {
                 TrialTimeline()
 
                 VStack(spacing: 12) {
-                    PaywallBenefit(symbol: "rectangle.on.rectangle.angled", title: "Home & Lock Screen widgets")
                     PaywallBenefit(symbol: "bell.badge.fill", title: "Word-of-the-day notifications")
+                    PaywallBenefit(symbol: "paintpalette.fill", title: "Widget themes, sizes & rotation")
                     PaywallBenefit(symbol: "infinity", title: "The feed & quizzes are always free")
                 }
 
@@ -54,7 +54,7 @@ struct StorePaywallView: View {
                         .background(VerbsyDesign.sage)
                         .clipShape(Capsule())
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.pressable)
                 .disabled(isPrimaryButtonDisabled)
 
                 Text(disclosure)
@@ -80,7 +80,7 @@ struct StorePaywallView: View {
                             .font(.system(size: 16, weight: .bold, design: .default))
                             .foregroundStyle(VerbsyDesign.muted)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.pressable)
                 }
 
                 VStack(spacing: 10) {
@@ -300,6 +300,6 @@ private struct PlanRow: View {
             .clipShape(RoundedRectangle(cornerRadius: VerbsyDesign.radiusCard, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: VerbsyDesign.radiusCard, style: .continuous).stroke(isSelected ? VerbsyDesign.sage : VerbsyDesign.line, lineWidth: isSelected ? 2 : 1))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.pressable)
     }
 }

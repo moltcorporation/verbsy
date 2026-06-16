@@ -1,4 +1,25 @@
 import SwiftUI
+import UIKit
+
+// MARK: - Pressable button style (premium press-scale + haptic on every tap)
+
+struct PressableButtonStyle: ButtonStyle {
+    var scale: CGFloat = 0.97
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? scale : 1)
+            .animation(.spring(response: 0.25, dampingFraction: 0.7), value: configuration.isPressed)
+            .sensoryFeedback(trigger: configuration.isPressed) { _, pressed in
+                pressed ? .impact(weight: .light) : nil
+            }
+    }
+}
+
+extension ButtonStyle where Self == PressableButtonStyle {
+    /// Standard tappable feel across the app: subtle scale + light haptic.
+    static var pressable: PressableButtonStyle { PressableButtonStyle() }
+}
 
 // MARK: - Small reusable atoms
 
@@ -144,33 +165,30 @@ struct WordShareCard: View {
     }
 }
 
-/// Tappable share control that renders the branded card and opens the share sheet.
+/// Tappable share control. The branded image is rendered lazily *only when the
+/// user taps* — never during scrolling — so the feed stays smooth.
 struct WordShareButton: View {
     let word: VerbsyWord
     var compact = false
 
-    @State private var rendered: Image?
+    @State private var showShareSheet = false
 
     private var shareText: String {
         "\(word.word) — \(word.shortDefinition)\n\nA sharper word from Verbsy. https://verbsy.app"
     }
 
     var body: some View {
-        Group {
-            if let rendered {
-                ShareLink(
-                    item: rendered,
-                    subject: Text("A word from Verbsy"),
-                    message: Text(shareText),
-                    preview: SharePreview(word.word, image: rendered)
-                ) {
-                    icon
-                }
-            } else {
-                ShareLink(item: shareText) { icon }
-            }
+        Button {
+            Haptics.selection()
+            showShareSheet = true
+        } label: {
+            icon
         }
-        .task(id: word.slug) { render() }
+        .buttonStyle(.plain)
+        .sheet(isPresented: $showShareSheet) {
+            ActivityView(activityItems: shareItems())
+                .presentationDetents([.medium, .large])
+        }
     }
 
     private var icon: some View {
@@ -183,13 +201,25 @@ struct WordShareButton: View {
             .overlay(Circle().stroke(VerbsyDesign.line))
     }
 
-    @MainActor private func render() {
+    @MainActor private func shareItems() -> [Any] {
         let renderer = ImageRenderer(content: WordShareCard(word: word))
         renderer.scale = 3
-        if let ui = renderer.uiImage {
-            rendered = Image(uiImage: ui)
+        if let image = renderer.uiImage {
+            return [image, shareText]
         }
+        return [shareText]
     }
+}
+
+/// Bridges UIActivityViewController for sharing image + text.
+struct ActivityView: UIViewControllerRepresentable {
+    let activityItems: [Any]
+
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(activityItems: activityItems, applicationActivities: nil)
+    }
+
+    func updateUIViewController(_ controller: UIActivityViewController, context: Context) {}
 }
 
 // MARK: - Search field

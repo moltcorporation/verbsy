@@ -37,7 +37,7 @@ struct ProfileView: View {
                     }
 
                     SettingsSection(title: "Daily habit") {
-                        gatedRow(.widgets, symbol: "rectangle.on.rectangle.angled", title: "Home Screen widgets", detail: purchases.isPro ? "Add a word to your Home & Lock Screen" : "Verbsy Pro")
+                        navRow(.widgets, symbol: "rectangle.on.rectangle.angled", title: "Home Screen widgets", detail: "A word on your Home & Lock Screen")
                         rowDivider
                         gatedRow(.notifications, symbol: "bell.fill", title: "Word of the day", detail: purchases.isPro ? "A new word every morning" : "Verbsy Pro")
                     }
@@ -50,7 +50,7 @@ struct ProfileView: View {
                         Button { Task { await purchases.restore() } } label: {
                             SettingsRowContent(symbol: "arrow.clockwise", title: "Restore Purchases", detail: "Restore an existing subscription.", showsChevron: false)
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(.pressable)
                     }
 
                     SettingsSection(title: "Support & legal") {
@@ -71,7 +71,7 @@ struct ProfileView: View {
                         Button(role: .destructive) { showResetConfirmation = true } label: {
                             SettingsRowContent(symbol: "trash.fill", title: "Reset progress", detail: "Clear favorites, stats, and streak.", showsChevron: false, tint: VerbsyDesign.destructive)
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(.pressable)
                     }
 
                     if let status = purchases.statusMessage {
@@ -146,7 +146,7 @@ struct ProfileView: View {
         Button { path.append(route) } label: {
             SettingsRowContent(symbol: symbol, title: title, detail: detail)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.pressable)
     }
 
     private func gatedRow(_ route: ProfileRoute, symbol: String, title: String, detail: String) -> some View {
@@ -163,7 +163,7 @@ struct ProfileView: View {
                 }
             }
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.pressable)
     }
 
     @ViewBuilder
@@ -212,7 +212,7 @@ private struct FavoritesView: View {
                 } else {
                     ForEach(favorites) { word in
                         Button { selected = word } label: { FavoriteRow(word: word) }
-                            .buttonStyle(.plain)
+                            .buttonStyle(.pressable)
                     }
                 }
             }
@@ -316,7 +316,7 @@ private struct TopicsPickerView: View {
             .clipShape(RoundedRectangle(cornerRadius: VerbsyDesign.radiusTile, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: VerbsyDesign.radiusTile, style: .continuous).stroke(prefs.isSurpriseMe ? Color.clear : VerbsyDesign.line))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.pressable)
     }
 
     private func topicTile(_ topic: String) -> some View {
@@ -345,7 +345,7 @@ private struct TopicsPickerView: View {
             .clipShape(RoundedRectangle(cornerRadius: VerbsyDesign.radiusTile, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: VerbsyDesign.radiusTile, style: .continuous).stroke(selected ? Color.clear : VerbsyDesign.line))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.pressable)
     }
 }
 
@@ -393,7 +393,7 @@ private struct DifficultyPickerView: View {
                         .clipShape(RoundedRectangle(cornerRadius: VerbsyDesign.radiusTile, style: .continuous))
                         .overlay(RoundedRectangle(cornerRadius: VerbsyDesign.radiusTile, style: .continuous).stroke(on ? VerbsyDesign.sage : VerbsyDesign.line, lineWidth: on ? 2 : 1))
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.pressable)
                 }
             }
             .padding(.horizontal, VerbsyDesign.pageGutter)
@@ -419,7 +419,7 @@ private struct WidgetsHelpView: View {
                 stepRow(2, "Tap the + in the top corner, then search for “Verbsy.”")
                 stepRow(3, "Choose a size, add it, and tap Done.")
 
-                Text("Your word refreshes through the day, and tapping it opens Verbsy.")
+                Text("Everyone gets a daily word widget. Verbsy Pro unlocks all themes and faster word rotation (every 3, 6, or 12 hours).")
                     .font(.system(size: 15, weight: .medium, design: .default))
                     .foregroundStyle(VerbsyDesign.muted)
                     .padding(.top, 4)
@@ -590,7 +590,7 @@ private struct SubscriptionView: View {
                             .background(VerbsyDesign.sage)
                             .clipShape(Capsule())
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.pressable)
                 }
 
                 Button { Task { await purchases.restore() } } label: {
@@ -689,7 +689,7 @@ struct WordDetailSheet: View {
                             .background(progress.isFavorite(word) ? VerbsyDesign.sageSoft : VerbsyDesign.sage)
                             .clipShape(Capsule())
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.pressable)
                 }
                 .padding(.horizontal, VerbsyDesign.pageGutter)
                 .padding(.vertical, 22)

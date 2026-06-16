@@ -952,7 +952,7 @@ private struct SaveProgressScreen: View {
                     .background(AppStyle.sage)
                     .clipShape(Capsule())
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.pressable)
                 .padding(.horizontal, 24)
             }
 
@@ -1000,7 +1000,7 @@ private struct PaywallScreen: View {
                         .background(AppStyle.sage)
                         .clipShape(Capsule())
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.pressable)
 
                 VStack(spacing: 12) {
                     Text("Already purchased?")
@@ -1041,7 +1041,7 @@ private struct ProgressHeader: View {
                     .clipShape(Circle())
             }
             .disabled(!canGoBack)
-            .buttonStyle(.plain)
+            .buttonStyle(.pressable)
 
             GeometryReader { geometry in
                 ZStack(alignment: .leading) {
@@ -1062,7 +1062,7 @@ private struct ProgressHeader: View {
                         .font(.system(size: 16, weight: .bold, design: .default))
                         .foregroundStyle(AppStyle.muted)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.pressable)
             }
         }
         .padding(.horizontal, 24)
@@ -1115,7 +1115,7 @@ private struct ChoiceTile: View {
                     .stroke(isSelected ? AppStyle.ink : .clear, lineWidth: 1.4)
             )
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.pressable)
     }
 }
 
@@ -1148,7 +1148,7 @@ private struct PrimaryBottomButton: View {
                     .padding(.top, 16)
                     .padding(.bottom, 12)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.pressable)
         }
         .background(.ultraThinMaterial)
     }

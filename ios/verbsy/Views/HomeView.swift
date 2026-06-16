@@ -53,7 +53,7 @@ struct HomeView: View {
                         .background(VerbsyDesign.sage)
                         .clipShape(RoundedRectangle(cornerRadius: VerbsyDesign.radiusCard, style: .continuous))
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.pressable)
 
                     VStack(alignment: .leading, spacing: 12) {
                         Eyebrow(text: "Your library")
@@ -64,8 +64,8 @@ struct HomeView: View {
                             HomeTile(symbol: "square.grid.2x2.fill", title: "Topics", value: nil, locked: false) {
                                 openProfile(.topics)
                             }
-                            HomeTile(symbol: "rectangle.on.rectangle.angled", title: "Widgets", value: nil, locked: !purchases.isPro) {
-                                purchases.isPro ? openProfile(.widgets) : (showPaywall = true)
+                            HomeTile(symbol: "rectangle.on.rectangle.angled", title: "Widgets", value: nil, locked: false) {
+                                openProfile(.widgets)
                             }
                             HomeTile(symbol: "bell.fill", title: "Daily word", value: nil, locked: !purchases.isPro) {
                                 purchases.isPro ? openProfile(.notifications) : (showPaywall = true)
@@ -202,6 +202,6 @@ private struct HomeTile: View {
             .clipShape(RoundedRectangle(cornerRadius: VerbsyDesign.radiusTile, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: VerbsyDesign.radiusTile, style: .continuous).stroke(VerbsyDesign.line))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.pressable)
     }
 }
