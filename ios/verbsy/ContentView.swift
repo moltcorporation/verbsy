@@ -44,14 +44,14 @@ private struct SplashView: View {
 struct OnboardingView: View {
     @EnvironmentObject private var purchases: PurchaseManager
 
-    let onCompleted: (_ wantsReminders: Bool, _ topics: [String]) -> Void
+    let onCompleted: (_ wantsReminders: Bool, _ topics: [String], _ level: String) -> Void
 
     @State private var step = 0
     @State private var data = OnboardingData()
     @State private var isGenerating = false
     @State private var navigationDirection = NavigationDirection.forward
 
-    private let totalSteps = 17
+    private let totalSteps = 16
 
     var body: some View {
         ZStack {
@@ -183,14 +183,20 @@ struct OnboardingView: View {
                 onContinue: next
             )
         case 10:
-            NotificationPreviewScreen(onContinue: next)
+            NotificationPreviewScreen(onContinue: {
+                // Actually request permission here if they opted in. We only
+                // schedule once they're Pro / on trial (handled in AppRootView).
+                if data.reminders == "Yes" {
+                    Task { await NotificationScheduler.requestAuthorization(); next() }
+                } else {
+                    next()
+                }
+            })
         case 11:
             WidgetPreviewScreen(onContinue: next)
         case 12:
-            SocialProofScreen(onContinue: next)
-        case 13:
             GeneratePlanIntro(onContinue: startGenerating)
-        case 14:
+        case 13:
             GeneratingPlanScreen(
                 goal: data.goal,
                 level: data.level,
@@ -198,18 +204,18 @@ struct OnboardingView: View {
                 isGenerating: $isGenerating,
                 onComplete: next
             )
-        case 15:
+        case 14:
             PlanRevealScreen(data: data, onContinue: next)
-        case 16:
+        case 15:
             SuccessPlanScreen(data: data, onContinue: next)
         default:
             StorePaywallView(
                 canContinueFree: true,
                 onContinueFree: {
-                    onCompleted(data.reminders == "Yes", Array(data.topics))
+                    onCompleted(data.reminders == "Yes", Array(data.topics), data.level)
                 },
                 onCompleted: {
-                    onCompleted(data.reminders == "Yes", Array(data.topics))
+                    onCompleted(data.reminders == "Yes", Array(data.topics), data.level)
                 }
             )
             .environmentObject(purchases)
@@ -217,7 +223,7 @@ struct OnboardingView: View {
     }
 
     private var skipHandler: (() -> Void)? {
-        guard (1...12).contains(step) else { return nil }
+        guard (1...11).contains(step) else { return nil }
         return { next() }
     }
 
@@ -510,42 +516,6 @@ private struct ValueInterstitial: View {
             }
 
             Spacer(minLength: 28)
-        }
-        .safeAreaInset(edge: .bottom) {
-            PrimaryBottomButton(title: "Continue", action: onContinue)
-        }
-    }
-}
-
-private struct SocialProofScreen: View {
-    let onContinue: () -> Void
-
-    var body: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(alignment: .leading, spacing: 28) {
-                Text("Join learners building a more precise voice")
-                    .font(VerbsyDesign.display(36))
-                    .foregroundStyle(AppStyle.ink)
-                    .lineSpacing(-1)
-                    .padding(.top, 28)
-
-                HStack(spacing: 14) {
-                    ProofMetric(value: "4.9", label: "early rating", symbol: "star.fill", tint: AppStyle.gold)
-                    ProofMetric(value: "1 word", label: "every day", symbol: "calendar", tint: AppStyle.sage)
-                }
-
-                TestimonialCard(
-                    name: "Maya",
-                    text: "The words feel useful, not academic. I actually remember them because the examples match real conversations."
-                )
-
-                TestimonialCard(
-                    name: "Julian",
-                    text: "It makes vocabulary feel premium and practical. The daily format is short enough to keep."
-                )
-            }
-            .padding(.horizontal, 24)
-            .padding(.bottom, 110)
         }
         .safeAreaInset(edge: .bottom) {
             PrimaryBottomButton(title: "Continue", action: onContinue)

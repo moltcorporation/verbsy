@@ -40,6 +40,13 @@ final class VerbsyContentStore: ObservableObject {
         WidgetBridge.write(word: todayWord)
     }
 
+    /// Push the widget's rotation pool (respecting the user's topics/difficulty).
+    func syncWidget(topics: [String], difficulties: [String]) {
+        let rotation = VerbsyCatalog.feedPage(topics: topics, difficulties: difficulties, seed: "widget-rotation", offset: 0, limit: 40)
+        WidgetBridge.write(words: rotation.isEmpty ? Array(VerbsyCatalog.words.prefix(40)) : rotation)
+        WidgetBridge.write(word: todayWord)
+    }
+
     // MARK: Learn feed
 
     func loadFeedPage(topics: [String], difficulties: [String], reset: Bool = false) async {

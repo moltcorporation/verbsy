@@ -27,14 +27,13 @@ struct AppRootView: View {
                 .opacity(isShowingSplash ? 0 : 1)
             } else {
                 OnboardingView(
-                    onCompleted: { wantsReminder, topics in
+                    onCompleted: { wantsReminder, topics, level in
                         wantsReminders = wantsReminder
                         prefs.setTopics(topics)
+                        prefs.applyLevel(level)
                         hasCompletedOnboarding = true
                         // Daily reminders are a Pro feature; schedule only once unlocked.
-                        if wantsReminder && purchases.isPro {
-                            Task { await NotificationScheduler.scheduleDailyWordReminder() }
-                        }
+                        if wantsReminder && purchases.isPro { scheduleReminders() }
                     }
                 )
                 .environmentObject(purchases)
@@ -66,17 +65,32 @@ struct AppRootView: View {
             }
         }
         .onChange(of: purchases.isPro) { _, isPro in
-            // If the user opted into reminders during onboarding, honor it once Pro.
-            if isPro && wantsReminders {
-                Task { await NotificationScheduler.scheduleDailyWordReminder() }
-            }
+            // Honor the reminder opt-in once Pro; cancel if Pro lapses.
+            if isPro && wantsReminders { scheduleReminders() }
+            else if !isPro { NotificationScheduler.cancelWordReminders() }
+            content.syncWidget(topics: prefs.selectedTopics, difficulties: prefs.effectiveDifficulties)
         }
         .task {
             await content.refresh()
+            content.syncWidget(topics: prefs.selectedTopics, difficulties: prefs.effectiveDifficulties)
+            // Notifications are one-shot; top up the schedule for Pro users on launch.
+            if purchases.isPro && wantsReminders { scheduleReminders() }
             try? await Task.sleep(for: .seconds(1.1))
             withAnimation(.easeInOut(duration: 0.4)) {
                 isShowingSplash = false
             }
+        }
+    }
+
+    private func scheduleReminders() {
+        Task {
+            await NotificationScheduler.scheduleWordReminders(
+                perDay: prefs.wordsPerDay,
+                startHour: prefs.reminderHour,
+                startMinute: prefs.reminderMinute,
+                topics: prefs.selectedTopics,
+                difficulties: prefs.effectiveDifficulties
+            )
         }
     }
 }

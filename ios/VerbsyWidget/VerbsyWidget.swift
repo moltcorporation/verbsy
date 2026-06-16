@@ -36,12 +36,39 @@ enum VerbsyWidgetTheme: String, AppEnum {
     ]
 }
 
+enum VerbsyWidgetRotation: String, AppEnum {
+    case daily
+    case twiceDaily
+    case sixHours
+    case threeHours
+
+    static var typeDisplayRepresentation = TypeDisplayRepresentation(name: "Change word")
+    static var caseDisplayRepresentations: [VerbsyWidgetRotation: DisplayRepresentation] = [
+        .daily: "Once a day",
+        .twiceDaily: "Every 12 hours",
+        .sixHours: "Every 6 hours",
+        .threeHours: "Every 3 hours"
+    ]
+
+    var hours: Int {
+        switch self {
+        case .daily: return 24
+        case .twiceDaily: return 12
+        case .sixHours: return 6
+        case .threeHours: return 3
+        }
+    }
+}
+
 struct VerbsyWidgetIntent: WidgetConfigurationIntent {
     static var title: LocalizedStringResource = "Word Widget"
-    static var description = IntentDescription("Choose the visual style for your Verbsy word widget.")
+    static var description = IntentDescription("Choose the style and how often the word changes.")
 
     @Parameter(title: "Style", default: .paper)
     var theme: VerbsyWidgetTheme
+
+    @Parameter(title: "Change word", default: .daily)
+    var rotation: VerbsyWidgetRotation
 }
 
 private struct VerbsyProvider: AppIntentTimelineProvider {
@@ -52,30 +79,47 @@ private struct VerbsyProvider: AppIntentTimelineProvider {
     }
 
     func snapshot(for configuration: VerbsyWidgetIntent, in context: Context) async -> VerbsyEntry {
-        currentEntry(configuration: configuration)
+        let defaults = UserDefaults(suiteName: appGroup) ?? .standard
+        let words = loadWords(defaults)
+        return VerbsyEntry(date: Date(), isPro: defaults.bool(forKey: "widget.isPro"), word: words[0], theme: configuration.theme)
     }
 
     func timeline(for configuration: VerbsyWidgetIntent, in context: Context) async -> Timeline<VerbsyEntry> {
-        let entry = currentEntry(configuration: configuration)
-        let nextRefresh = Calendar.current.date(byAdding: .hour, value: 3, to: Date()) ?? Date().addingTimeInterval(10_800)
-        return Timeline(entries: [entry], policy: .after(nextRefresh))
-    }
-
-    private func currentEntry(configuration: VerbsyWidgetIntent) -> VerbsyEntry {
         let defaults = UserDefaults(suiteName: appGroup) ?? .standard
         let isPro = defaults.bool(forKey: "widget.isPro")
-        let word: WidgetWord
+        let words = loadWords(defaults)
+        let interval = max(1, configuration.rotation.hours)
+        let calendar = Calendar.current
+        let now = Date()
 
+        // Pre-build rotating entries covering ~2 days so the word changes on
+        // schedule without needing the app to run.
+        var entries: [VerbsyEntry] = []
+        let count = max(2, (48 / interval) + 1)
+        for i in 0..<count {
+            let date = calendar.date(byAdding: .hour, value: i * interval, to: now) ?? now
+            let bucket = Int(date.timeIntervalSince1970 / 3600) / interval
+            let word = words[((bucket % words.count) + words.count) % words.count]
+            entries.append(VerbsyEntry(date: date, isPro: isPro, word: word, theme: configuration.theme))
+        }
+        return Timeline(entries: entries, policy: .atEnd)
+    }
+
+    private func loadWords(_ defaults: UserDefaults) -> [WidgetWord] {
+        if
+            let data = defaults.data(forKey: "widget.words"),
+            let decoded = try? JSONDecoder().decode([WidgetWord].self, from: data),
+            !decoded.isEmpty
+        {
+            return decoded
+        }
         if
             let data = defaults.data(forKey: "widget.todayWord"),
             let decoded = try? JSONDecoder().decode(WidgetWord.self, from: data)
         {
-            word = decoded
-        } else {
-            word = .sample
+            return [decoded]
         }
-
-        return VerbsyEntry(date: Date(), isPro: isPro, word: word, theme: configuration.theme)
+        return [.sample]
     }
 }
 

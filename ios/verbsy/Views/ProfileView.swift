@@ -456,17 +456,19 @@ private struct WidgetsHelpView: View {
 // MARK: - Notifications (Pro)
 
 private struct NotificationsSettingsView: View {
+    @EnvironmentObject private var prefs: PreferencesStore
     @AppStorage("verbsy.wantsReminders") private var wantsReminders = false
+    @State private var reminderTime = Date()
 
     var body: some View {
         ScrollView(showsIndicators: false) {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 14) {
                 Toggle(isOn: $wantsReminders) {
                     VStack(alignment: .leading, spacing: 3) {
                         Text("Word of the day")
                             .font(.system(size: 18, weight: .bold, design: .default))
                             .foregroundStyle(VerbsyDesign.ink)
-                        Text("A gentle reminder each morning with a new word.")
+                        Text("New words delivered as a gentle daily push.")
                             .font(.system(size: 14, weight: .medium, design: .default))
                             .foregroundStyle(VerbsyDesign.muted)
                     }
@@ -476,19 +478,85 @@ private struct NotificationsSettingsView: View {
                 .background(VerbsyDesign.surface)
                 .clipShape(RoundedRectangle(cornerRadius: VerbsyDesign.radiusTile, style: .continuous))
                 .overlay(RoundedRectangle(cornerRadius: VerbsyDesign.radiusTile, style: .continuous).stroke(VerbsyDesign.line))
-                .onChange(of: wantsReminders) { _, on in
-                    Task {
-                        if on { await NotificationScheduler.scheduleDailyWordReminder() }
-                        else { NotificationScheduler.cancelDailyWordReminder() }
+
+                if wantsReminders {
+                    VStack(spacing: 0) {
+                        Stepper(value: $prefs.wordsPerDay, in: 1...5) {
+                            HStack {
+                                Text("Words per day")
+                                    .font(.system(size: 16, weight: .semibold, design: .default))
+                                    .foregroundStyle(VerbsyDesign.ink)
+                                Spacer()
+                                Text("\(prefs.wordsPerDay)")
+                                    .font(.system(size: 16, weight: .bold, design: .default))
+                                    .foregroundStyle(VerbsyDesign.sage)
+                                    .monospacedDigit()
+                            }
+                        }
+                        .padding(.horizontal, 18)
+                        .padding(.vertical, 14)
+
+                        Divider().overlay(VerbsyDesign.line)
+
+                        DatePicker(
+                            selection: $reminderTime,
+                            displayedComponents: .hourAndMinute
+                        ) {
+                            Text(prefs.wordsPerDay > 1 ? "First reminder" : "Reminder time")
+                                .font(.system(size: 16, weight: .semibold, design: .default))
+                                .foregroundStyle(VerbsyDesign.ink)
+                        }
+                        .tint(VerbsyDesign.sage)
+                        .padding(.horizontal, 18)
+                        .padding(.vertical, 10)
                     }
+                    .background(VerbsyDesign.surface)
+                    .clipShape(RoundedRectangle(cornerRadius: VerbsyDesign.radiusTile, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: VerbsyDesign.radiusTile, style: .continuous).stroke(VerbsyDesign.line))
+                    .transition(.opacity)
+
+                    Text(prefs.wordsPerDay > 1
+                         ? "We’ll space \(prefs.wordsPerDay) words from your start time through the evening."
+                         : "One sharp word each day, drawn from your chosen topics.")
+                        .font(.system(size: 13, weight: .medium, design: .default))
+                        .foregroundStyle(VerbsyDesign.muted)
+                        .padding(.horizontal, 4)
                 }
             }
             .padding(.horizontal, VerbsyDesign.pageGutter)
             .padding(.vertical, 18)
+            .animation(.easeInOut(duration: 0.2), value: wantsReminders)
         }
         .background(VerbsyDesign.background.ignoresSafeArea())
         .navigationTitle("Daily word")
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear { reminderTime = timeFromPrefs() }
+        .onChange(of: wantsReminders) { _, on in
+            if on { reschedule() } else { NotificationScheduler.cancelWordReminders() }
+        }
+        .onChange(of: prefs.wordsPerDay) { _, _ in if wantsReminders { reschedule() } }
+        .onChange(of: reminderTime) { _, newValue in
+            let comps = Calendar.current.dateComponents([.hour, .minute], from: newValue)
+            prefs.reminderHour = comps.hour ?? 9
+            prefs.reminderMinute = comps.minute ?? 0
+            if wantsReminders { reschedule() }
+        }
+    }
+
+    private func timeFromPrefs() -> Date {
+        Calendar.current.date(bySettingHour: prefs.reminderHour, minute: prefs.reminderMinute, second: 0, of: Date()) ?? Date()
+    }
+
+    private func reschedule() {
+        Task {
+            await NotificationScheduler.scheduleWordReminders(
+                perDay: prefs.wordsPerDay,
+                startHour: prefs.reminderHour,
+                startMinute: prefs.reminderMinute,
+                topics: prefs.selectedTopics,
+                difficulties: prefs.effectiveDifficulties
+            )
+        }
     }
 }
 
