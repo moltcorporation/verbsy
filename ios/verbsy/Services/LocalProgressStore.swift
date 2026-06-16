@@ -11,31 +11,37 @@ final class LocalProgressStore: ObservableObject {
         load()
     }
 
-    func isSaved(_ word: VerbsyWord) -> Bool {
-        progress.savedSlugs.contains(word.slug)
+    // MARK: Favorites
+
+    func isFavorite(_ word: VerbsyWord) -> Bool {
+        progress.favoriteSlugs.contains(word.slug)
     }
 
-    func toggleSaved(_ word: VerbsyWord) {
-        if progress.savedSlugs.contains(word.slug) {
-            progress.savedSlugs.remove(word.slug)
+    func toggleFavorite(_ word: VerbsyWord) {
+        if progress.favoriteSlugs.contains(word.slug) {
+            progress.favoriteSlugs.remove(word.slug)
         } else {
-            progress.savedSlugs.insert(word.slug)
+            progress.favoriteSlugs.insert(word.slug)
         }
         save()
     }
 
-    func isLearned(_ word: VerbsyWord) -> Bool {
-        progress.learnedSlugs.contains(word.slug)
-    }
+    // MARK: Learning activity (drives stats + streak)
 
-    func markLearned(_ word: VerbsyWord) {
-        progress.learnedSlugs.insert(word.slug)
-        progress.learnedDates.insert(LocalProgress.key(for: Date()))
+    /// Call when a feed card becomes the active full-screen card.
+    func recordSeen(_ word: VerbsyWord) {
+        guard !progress.seenSlugs.contains(word.slug) else { return }
+        let today = LocalProgress.key(for: Date())
+        progress.seenSlugs.insert(word.slug)
+        progress.seenByDate[today, default: 0] += 1
+        refreshActive(for: today)
         save()
     }
 
     func recordQuiz(word: VerbsyWord, correct: Bool) {
+        let today = LocalProgress.key(for: Date())
         progress.quizAttempts += 1
+        progress.quizByDate[today, default: 0] += 1
         if correct {
             progress.quizCorrect += 1
         }
@@ -46,6 +52,7 @@ final class LocalProgressStore: ObservableObject {
         }
         memory.lastReviewedAt = Date()
         progress.reviewResults[word.slug] = memory
+        refreshActive(for: today)
         save()
     }
 
@@ -56,6 +63,16 @@ final class LocalProgressStore: ObservableObject {
     func resetAll() {
         progress = LocalProgress()
         save()
+    }
+
+    // A day counts toward the streak once the user has met the daily goal,
+    // through new words seen or quiz questions answered.
+    private func refreshActive(for day: String) {
+        let seen = progress.seenByDate[day] ?? 0
+        let quizzed = progress.quizByDate[day] ?? 0
+        if seen >= LocalProgress.dailyGoal || quizzed >= LocalProgress.dailyGoal {
+            progress.activeDates.insert(day)
+        }
     }
 
     private func load() {

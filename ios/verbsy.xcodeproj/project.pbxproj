@@ -345,6 +345,7 @@
 				CODE_SIGN_ENTITLEMENTS = verbsy/verbsy.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 46696JNF4G;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Verbsy;
@@ -377,6 +378,7 @@
 				CODE_SIGN_ENTITLEMENTS = verbsy/verbsy.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 46696JNF4G;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Verbsy;
@@ -407,6 +409,7 @@
 				CODE_SIGN_ENTITLEMENTS = VerbsyWidget/VerbsyWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 46696JNF4G;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = VerbsyWidgetInfo.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Verbsy;
@@ -435,6 +438,7 @@
 				CODE_SIGN_ENTITLEMENTS = VerbsyWidget/VerbsyWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 46696JNF4G;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = VerbsyWidgetInfo.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Verbsy;

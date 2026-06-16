@@ -23,7 +23,11 @@ enum NotificationScheduler {
             let request = UNNotificationRequest(identifier: "verbsy.daily.word", content: content, trigger: trigger)
             try await center.add(request)
         } catch {
-            // Notification permission is optional for the MVP.
+            // Notification permission is optional.
         }
+    }
+
+    static func cancelDailyWordReminder() {
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["verbsy.daily.word"])
     }
 }

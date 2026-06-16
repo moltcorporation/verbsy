@@ -2,6 +2,10 @@
 
 Verbsy is a mobile app focused on helping users improve their vocabulary, communication skills, and emotional intelligence by learning one powerful new word each day.
 
+## Brand & Design
+
+The visual identity is **"Sage Scholar"** — premium, soothing, literary. See [brand_guide.md](brand_guide.md) for the full color palette (light + dark), typography, design tokens (SwiftUI + CSS), and usage rules. **Always consult and follow it for any UI, styling, or design work.**
+
 ## Audience
 
 Verbsy targets people interested in self-improvement, psychology, productivity, philosophy, writing, communication, education, and intellectually aspirational content across a broad age range.

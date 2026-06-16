@@ -34,21 +34,25 @@
           "codeOffers" : [
 
           ],
-          "displayPrice" : "1.99",
+          "displayPrice" : "29.99",
           "familyShareable" : false,
-          "groupNumber" : 3,
-          "internalID" : "0A8A0D6E",
-          "introductoryOffer" : null,
+          "groupNumber" : 1,
+          "internalID" : "74F31297",
+          "introductoryOffer" : {
+            "internalID" : "A1B2C3D4",
+            "paymentMode" : "free",
+            "subscriptionPeriod" : "P3D"
+          },
           "localizations" : [
             {
-              "description" : "Weekly access to Verbsy Pro.",
-              "displayName" : "Verbsy Pro Weekly",
+              "description" : "Annual access to Verbsy Pro.",
+              "displayName" : "Verbsy Pro Yearly",
               "locale" : "en_US"
             }
           ],
-          "productID" : "verbsy.pro.weekly",
-          "recurringSubscriptionPeriod" : "P1W",
-          "referenceName" : "Verbsy Pro Weekly",
+          "productID" : "verbsy.pro.annual",
+          "recurringSubscriptionPeriod" : "P1Y",
+          "referenceName" : "Verbsy Pro Annual",
           "subscriptionGroupID" : "5D2F9C40",
           "type" : "RecurringSubscription",
           "winbackOffers" : [
@@ -62,11 +66,15 @@
           "codeOffers" : [
 
           ],
-          "displayPrice" : "7.99",
+          "displayPrice" : "9.99",
           "familyShareable" : false,
           "groupNumber" : 2,
           "internalID" : "D4E77B31",
-          "introductoryOffer" : null,
+          "introductoryOffer" : {
+            "internalID" : "E5F6A7B8",
+            "paymentMode" : "free",
+            "subscriptionPeriod" : "P3D"
+          },
           "localizations" : [
             {
               "description" : "Monthly access to Verbsy Pro.",
@@ -77,34 +85,6 @@
           "productID" : "verbsy.pro.monthly",
           "recurringSubscriptionPeriod" : "P1M",
           "referenceName" : "Verbsy Pro Monthly",
-          "subscriptionGroupID" : "5D2F9C40",
-          "type" : "RecurringSubscription",
-          "winbackOffers" : [
-
-          ]
-        },
-        {
-          "adHocOffers" : [
-
-          ],
-          "codeOffers" : [
-
-          ],
-          "displayPrice" : "29.99",
-          "familyShareable" : false,
-          "groupNumber" : 1,
-          "internalID" : "74F31297",
-          "introductoryOffer" : null,
-          "localizations" : [
-            {
-              "description" : "Annual access to Verbsy Pro.",
-              "displayName" : "Verbsy Pro Annual",
-              "locale" : "en_US"
-            }
-          ],
-          "productID" : "verbsy.pro.annual",
-          "recurringSubscriptionPeriod" : "P1Y",
-          "referenceName" : "Verbsy Pro Annual",
           "subscriptionGroupID" : "5D2F9C40",
           "type" : "RecurringSubscription",
           "winbackOffers" : [

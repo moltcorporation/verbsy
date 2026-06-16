@@ -22,6 +22,8 @@ export const words = pgTable(
     example: text("example").notNull(),
     secondExample: text("second_example"),
     useCase: text("use_case").notNull(),
+    origin: text("origin"),
+    synonyms: text("synonyms").array(),
     difficulty: text("difficulty").notNull(),
     topics: text("topics").array().notNull(),
     emotionalTone: text("emotional_tone"),

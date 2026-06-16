@@ -1,0 +1,656 @@
+import SwiftUI
+
+/// Deep-link targets used by Home tiles and Profile rows.
+enum ProfileRoute: Hashable {
+    case favorites
+    case topics
+    case difficulty
+    case widgets
+    case notifications
+    case subscription
+}
+
+struct ProfileView: View {
+    @EnvironmentObject private var content: VerbsyContentStore
+    @EnvironmentObject private var purchases: PurchaseManager
+    @EnvironmentObject private var progress: LocalProgressStore
+    @EnvironmentObject private var prefs: PreferencesStore
+
+    @Binding var showPaywall: Bool
+    @Binding var route: ProfileRoute?
+
+    @State private var path: [ProfileRoute] = []
+    @State private var showResetConfirmation = false
+
+    var body: some View {
+        NavigationStack(path: $path) {
+            ScrollView(showsIndicators: false) {
+                VStack(alignment: .leading, spacing: VerbsyDesign.sectionGap) {
+                    header
+
+                    SettingsSection(title: "Learning") {
+                        navRow(.favorites, symbol: "heart.fill", title: "Favorite words", detail: "\(progress.progress.favoritesCount) saved")
+                        rowDivider
+                        navRow(.topics, symbol: "square.grid.2x2.fill", title: "Topics", detail: prefs.isSurpriseMe ? "Surprise me · all topics" : prefs.selectedTopics.prefix(2).joined(separator: ", "))
+                        rowDivider
+                        navRow(.difficulty, symbol: "dial.medium.fill", title: "Difficulty", detail: difficultyDetail)
+                    }
+
+                    SettingsSection(title: "Daily habit") {
+                        gatedRow(.widgets, symbol: "rectangle.on.rectangle.angled", title: "Home Screen widgets", detail: purchases.isPro ? "Add a word to your Home & Lock Screen" : "Verbsy Pro")
+                        rowDivider
+                        gatedRow(.notifications, symbol: "bell.fill", title: "Word of the day", detail: purchases.isPro ? "A new word every morning" : "Verbsy Pro")
+                    }
+
+                    SettingsSection(title: "Verbsy Pro") {
+                        navRow(.subscription, symbol: purchases.isPro ? "checkmark.seal.fill" : "sparkles",
+                               title: purchases.isPro ? "Verbsy Pro is active" : "Upgrade to Verbsy Pro",
+                               detail: purchases.isPro ? "Manage your subscription" : "Widgets, daily words, and more")
+                        rowDivider
+                        Button { Task { await purchases.restore() } } label: {
+                            SettingsRowContent(symbol: "arrow.clockwise", title: "Restore Purchases", detail: "Restore an existing subscription.", showsChevron: false)
+                        }
+                        .buttonStyle(.plain)
+                    }
+
+                    SettingsSection(title: "Support & legal") {
+                        Link(destination: URL(string: "https://verbsy.app/support")!) {
+                            SettingsRowContent(symbol: "questionmark.circle.fill", title: "Support", detail: "Contact support@verbsy.app.")
+                        }
+                        rowDivider
+                        Link(destination: URL(string: "https://verbsy.app/privacy")!) {
+                            SettingsRowContent(symbol: "hand.raised.fill", title: "Privacy Policy", detail: "How Verbsy handles data.")
+                        }
+                        rowDivider
+                        Link(destination: URL(string: "https://verbsy.app/terms")!) {
+                            SettingsRowContent(symbol: "doc.text.fill", title: "Terms of Use", detail: "Subscription and app terms.")
+                        }
+                    }
+
+                    SettingsSection(title: "Local data") {
+                        Button(role: .destructive) { showResetConfirmation = true } label: {
+                            SettingsRowContent(symbol: "trash.fill", title: "Reset progress", detail: "Clear favorites, stats, and streak.", showsChevron: false, tint: VerbsyDesign.destructive)
+                        }
+                        .buttonStyle(.plain)
+                    }
+
+                    if let status = purchases.statusMessage {
+                        Text(status)
+                            .font(.system(size: 13, weight: .medium, design: .default))
+                            .foregroundStyle(VerbsyDesign.muted)
+                            .frame(maxWidth: .infinity, alignment: .center)
+                            .multilineTextAlignment(.center)
+                    }
+                }
+                .padding(.horizontal, VerbsyDesign.pageGutter)
+                .padding(.vertical, 20)
+            }
+            .background(VerbsyDesign.background.ignoresSafeArea())
+            .navigationDestination(for: ProfileRoute.self) { destination in
+                destinationView(destination)
+            }
+            .confirmationDialog("Reset local progress?", isPresented: $showResetConfirmation, titleVisibility: .visible) {
+                Button("Reset Progress", role: .destructive) { progress.resetAll() }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("This clears only data stored on this device.")
+            }
+        }
+        .onChange(of: route) { _, newValue in
+            guard let newValue else { return }
+            path = [newValue]
+            route = nil
+        }
+    }
+
+    private var header: some View {
+        HStack(spacing: 12) {
+            VerbsyLogo(size: 44)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("You")
+                    .font(VerbsyDesign.display(30))
+                    .foregroundStyle(VerbsyDesign.ink)
+                Text(purchases.isPro ? "Verbsy Pro" : "Free plan")
+                    .font(.system(size: 14, weight: .semibold, design: .default))
+                    .foregroundStyle(purchases.isPro ? VerbsyDesign.sage : VerbsyDesign.muted)
+            }
+            Spacer()
+            if purchases.isPro {
+                Image(systemName: "crown.fill")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundStyle(VerbsyDesign.gold)
+                    .padding(10)
+                    .background(VerbsyDesign.goldSoft)
+                    .clipShape(Circle())
+            }
+        }
+    }
+
+    private var difficultyDetail: String {
+        let labels = prefs.difficulties.map { d -> String in
+            switch d {
+            case "casual": return "Everyday"
+            case "curious": return "Curious"
+            case "advanced": return "Advanced"
+            default: return d.capitalized
+            }
+        }
+        return labels.isEmpty ? "All levels" : labels.joined(separator: ", ")
+    }
+
+    private var rowDivider: some View {
+        Divider().overlay(VerbsyDesign.line).padding(.leading, 68)
+    }
+
+    private func navRow(_ route: ProfileRoute, symbol: String, title: String, detail: String) -> some View {
+        Button { path.append(route) } label: {
+            SettingsRowContent(symbol: symbol, title: title, detail: detail)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func gatedRow(_ route: ProfileRoute, symbol: String, title: String, detail: String) -> some View {
+        Button {
+            if purchases.isPro { path.append(route) } else { showPaywall = true }
+        } label: {
+            HStack(spacing: 0) {
+                SettingsRowContent(symbol: symbol, title: title, detail: detail, showsChevron: purchases.isPro)
+                if !purchases.isPro {
+                    Image(systemName: "lock.fill")
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundStyle(VerbsyDesign.gold)
+                        .padding(.trailing, 16)
+                }
+            }
+        }
+        .buttonStyle(.plain)
+    }
+
+    @ViewBuilder
+    private func destinationView(_ destination: ProfileRoute) -> some View {
+        switch destination {
+        case .favorites: FavoritesView()
+        case .topics: TopicsPickerView()
+        case .difficulty: DifficultyPickerView()
+        case .widgets: WidgetsHelpView()
+        case .notifications: NotificationsSettingsView()
+        case .subscription: SubscriptionView(showPaywall: $showPaywall)
+        }
+    }
+}
+
+// MARK: - Favorites
+
+private struct FavoritesView: View {
+    @EnvironmentObject private var content: VerbsyContentStore
+    @EnvironmentObject private var progress: LocalProgressStore
+    @State private var query = ""
+    @State private var selected: VerbsyWord?
+
+    private var favorites: [VerbsyWord] {
+        let all = content.words(for: progress.progress.favoriteSlugs)
+        let trimmed = query.trimmingCharacters(in: .whitespaces)
+        guard !trimmed.isEmpty else { return all }
+        return all.filter {
+            $0.word.localizedCaseInsensitiveContains(trimmed) ||
+            $0.shortDefinition.localizedCaseInsensitiveContains(trimmed)
+        }
+    }
+
+    var body: some View {
+        ScrollView(showsIndicators: false) {
+            VStack(alignment: .leading, spacing: 14) {
+                if !progress.progress.favoriteSlugs.isEmpty {
+                    SearchField(text: $query)
+                }
+                if favorites.isEmpty {
+                    EmptyStateCard(
+                        symbol: "heart",
+                        title: progress.progress.favoriteSlugs.isEmpty ? "No favorites yet" : "No matches",
+                        detail: progress.progress.favoriteSlugs.isEmpty ? "Tap the heart on any word in Learn to save it here." : "Try a different search."
+                    )
+                } else {
+                    ForEach(favorites) { word in
+                        Button { selected = word } label: { FavoriteRow(word: word) }
+                            .buttonStyle(.plain)
+                    }
+                }
+            }
+            .padding(.horizontal, VerbsyDesign.pageGutter)
+            .padding(.vertical, 18)
+        }
+        .background(VerbsyDesign.background.ignoresSafeArea())
+        .navigationTitle("Favorites")
+        .navigationBarTitleDisplayMode(.inline)
+        .sheet(item: $selected) { word in
+            WordDetailSheet(word: word).environmentObject(progress)
+        }
+    }
+}
+
+private struct FavoriteRow: View {
+    let word: VerbsyWord
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            VStack(alignment: .leading, spacing: 5) {
+                Text(word.word)
+                    .font(VerbsyDesign.display(22))
+                    .foregroundStyle(VerbsyDesign.ink)
+                Text(word.shortDefinition)
+                    .font(.system(size: 15, weight: .medium, design: .default))
+                    .foregroundStyle(VerbsyDesign.muted)
+                    .multilineTextAlignment(.leading)
+            }
+            Spacer()
+            Image(systemName: "chevron.right")
+                .font(.system(size: 13, weight: .bold))
+                .foregroundStyle(VerbsyDesign.muted.opacity(0.45))
+                .padding(.top, 6)
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(VerbsyDesign.surface)
+        .clipShape(RoundedRectangle(cornerRadius: VerbsyDesign.radiusTile, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: VerbsyDesign.radiusTile, style: .continuous).stroke(VerbsyDesign.line))
+    }
+}
+
+// MARK: - Topics
+
+private struct TopicsPickerView: View {
+    @EnvironmentObject private var content: VerbsyContentStore
+    @EnvironmentObject private var prefs: PreferencesStore
+
+    private var topics: [String] {
+        content.topics.isEmpty ? VerbsyCatalog.topics : content.topics
+    }
+
+    var body: some View {
+        ScrollView(showsIndicators: false) {
+            VStack(alignment: .leading, spacing: 14) {
+                Text("Pick what you’re curious about, or let Verbsy surprise you.")
+                    .font(.system(size: 16, weight: .medium, design: .default))
+                    .foregroundStyle(VerbsyDesign.muted)
+
+                surpriseTile
+
+                LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
+                    ForEach(topics, id: \.self) { topic in
+                        topicTile(topic)
+                    }
+                }
+            }
+            .padding(.horizontal, VerbsyDesign.pageGutter)
+            .padding(.vertical, 18)
+        }
+        .background(VerbsyDesign.background.ignoresSafeArea())
+        .navigationTitle("Topics")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private var surpriseTile: some View {
+        Button {
+            Haptics.selection()
+            prefs.setTopics([])
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: "sparkles")
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundStyle(prefs.isSurpriseMe ? VerbsyDesign.onSage : VerbsyDesign.sage)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Surprise me")
+                        .font(.system(size: 17, weight: .bold, design: .default))
+                        .foregroundStyle(prefs.isSurpriseMe ? VerbsyDesign.onSage : VerbsyDesign.ink)
+                    Text("All topics, fully mixed")
+                        .font(.system(size: 13, weight: .medium, design: .default))
+                        .foregroundStyle(prefs.isSurpriseMe ? VerbsyDesign.onSage.opacity(0.85) : VerbsyDesign.muted)
+                }
+                Spacer()
+                if prefs.isSurpriseMe {
+                    Image(systemName: "checkmark.circle.fill").foregroundStyle(VerbsyDesign.onSage)
+                }
+            }
+            .padding(18)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(prefs.isSurpriseMe ? VerbsyDesign.sage : VerbsyDesign.surface)
+            .clipShape(RoundedRectangle(cornerRadius: VerbsyDesign.radiusTile, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: VerbsyDesign.radiusTile, style: .continuous).stroke(prefs.isSurpriseMe ? Color.clear : VerbsyDesign.line))
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func topicTile(_ topic: String) -> some View {
+        let selected = prefs.selectedTopics.contains(topic)
+        return Button {
+            Haptics.selection()
+            var next = prefs.selectedTopics
+            if selected { next.removeAll { $0 == topic } } else { next.append(topic) }
+            prefs.setTopics(next)
+        } label: {
+            HStack {
+                Text(topic)
+                    .font(.system(size: 15, weight: .bold, design: .default))
+                    .foregroundStyle(selected ? VerbsyDesign.onSage : VerbsyDesign.ink)
+                    .multilineTextAlignment(.leading)
+                Spacer()
+                if selected {
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundStyle(VerbsyDesign.onSage)
+                }
+            }
+            .padding(16)
+            .frame(maxWidth: .infinity, minHeight: 64, alignment: .leading)
+            .background(selected ? VerbsyDesign.sage : VerbsyDesign.surface)
+            .clipShape(RoundedRectangle(cornerRadius: VerbsyDesign.radiusTile, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: VerbsyDesign.radiusTile, style: .continuous).stroke(selected ? Color.clear : VerbsyDesign.line))
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Difficulty
+
+private struct DifficultyPickerView: View {
+    @EnvironmentObject private var prefs: PreferencesStore
+
+    private let levels: [(id: String, title: String, detail: String)] = [
+        ("casual", "Everyday", "Useful words you’ll reach for often"),
+        ("curious", "Curious", "A little rarer, a little delightful"),
+        ("advanced", "Advanced", "Sharp, sophisticated, and rare"),
+    ]
+
+    var body: some View {
+        ScrollView(showsIndicators: false) {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Choose how challenging your words feel.")
+                    .font(.system(size: 16, weight: .medium, design: .default))
+                    .foregroundStyle(VerbsyDesign.muted)
+                    .padding(.bottom, 4)
+
+                ForEach(levels, id: \.id) { level in
+                    let on = prefs.difficulties.contains(level.id)
+                    Button {
+                        Haptics.selection()
+                        prefs.toggleDifficulty(level.id)
+                    } label: {
+                        HStack(spacing: 12) {
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(level.title)
+                                    .font(.system(size: 18, weight: .bold, design: .default))
+                                    .foregroundStyle(VerbsyDesign.ink)
+                                Text(level.detail)
+                                    .font(.system(size: 14, weight: .medium, design: .default))
+                                    .foregroundStyle(VerbsyDesign.muted)
+                            }
+                            Spacer()
+                            Image(systemName: on ? "checkmark.circle.fill" : "circle")
+                                .font(.system(size: 24, weight: .bold))
+                                .foregroundStyle(on ? VerbsyDesign.sage : VerbsyDesign.muted.opacity(0.4))
+                        }
+                        .padding(18)
+                        .background(VerbsyDesign.surface)
+                        .clipShape(RoundedRectangle(cornerRadius: VerbsyDesign.radiusTile, style: .continuous))
+                        .overlay(RoundedRectangle(cornerRadius: VerbsyDesign.radiusTile, style: .continuous).stroke(on ? VerbsyDesign.sage : VerbsyDesign.line, lineWidth: on ? 2 : 1))
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(.horizontal, VerbsyDesign.pageGutter)
+            .padding(.vertical, 18)
+        }
+        .background(VerbsyDesign.background.ignoresSafeArea())
+        .navigationTitle("Difficulty")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+// MARK: - Widgets help (Pro)
+
+private struct WidgetsHelpView: View {
+    var body: some View {
+        ScrollView(showsIndicators: false) {
+            VStack(alignment: .leading, spacing: 16) {
+                Text("Put a sharper word on your Home and Lock Screen.")
+                    .font(VerbsyDesign.display(24))
+                    .foregroundStyle(VerbsyDesign.ink)
+
+                stepRow(1, "Touch and hold your Home Screen until the apps jiggle.")
+                stepRow(2, "Tap the + in the top corner, then search for “Verbsy.”")
+                stepRow(3, "Choose a size, add it, and tap Done.")
+
+                Text("Your word refreshes through the day, and tapping it opens Verbsy.")
+                    .font(.system(size: 15, weight: .medium, design: .default))
+                    .foregroundStyle(VerbsyDesign.muted)
+                    .padding(.top, 4)
+            }
+            .padding(.horizontal, VerbsyDesign.pageGutter)
+            .padding(.vertical, 18)
+        }
+        .background(VerbsyDesign.background.ignoresSafeArea())
+        .navigationTitle("Widgets")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private func stepRow(_ n: Int, _ text: String) -> some View {
+        HStack(alignment: .top, spacing: 14) {
+            Text("\(n)")
+                .font(.system(size: 16, weight: .bold, design: .default))
+                .foregroundStyle(VerbsyDesign.onSage)
+                .frame(width: 32, height: 32)
+                .background(VerbsyDesign.sage)
+                .clipShape(Circle())
+            Text(text)
+                .font(.system(size: 16, weight: .medium, design: .default))
+                .foregroundStyle(VerbsyDesign.ink)
+            Spacer()
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(VerbsyDesign.surface)
+        .clipShape(RoundedRectangle(cornerRadius: VerbsyDesign.radiusTile, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: VerbsyDesign.radiusTile, style: .continuous).stroke(VerbsyDesign.line))
+    }
+}
+
+// MARK: - Notifications (Pro)
+
+private struct NotificationsSettingsView: View {
+    @AppStorage("verbsy.wantsReminders") private var wantsReminders = false
+
+    var body: some View {
+        ScrollView(showsIndicators: false) {
+            VStack(alignment: .leading, spacing: 16) {
+                Toggle(isOn: $wantsReminders) {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("Word of the day")
+                            .font(.system(size: 18, weight: .bold, design: .default))
+                            .foregroundStyle(VerbsyDesign.ink)
+                        Text("A gentle reminder each morning with a new word.")
+                            .font(.system(size: 14, weight: .medium, design: .default))
+                            .foregroundStyle(VerbsyDesign.muted)
+                    }
+                }
+                .tint(VerbsyDesign.sage)
+                .padding(18)
+                .background(VerbsyDesign.surface)
+                .clipShape(RoundedRectangle(cornerRadius: VerbsyDesign.radiusTile, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: VerbsyDesign.radiusTile, style: .continuous).stroke(VerbsyDesign.line))
+                .onChange(of: wantsReminders) { _, on in
+                    Task {
+                        if on { await NotificationScheduler.scheduleDailyWordReminder() }
+                        else { NotificationScheduler.cancelDailyWordReminder() }
+                    }
+                }
+            }
+            .padding(.horizontal, VerbsyDesign.pageGutter)
+            .padding(.vertical, 18)
+        }
+        .background(VerbsyDesign.background.ignoresSafeArea())
+        .navigationTitle("Daily word")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+// MARK: - Subscription
+
+private struct SubscriptionView: View {
+    @EnvironmentObject private var purchases: PurchaseManager
+    @Binding var showPaywall: Bool
+
+    var body: some View {
+        ScrollView(showsIndicators: false) {
+            VStack(alignment: .leading, spacing: 16) {
+                if purchases.isPro {
+                    EmptyStateCard(symbol: "checkmark.seal.fill", title: "Verbsy Pro is active", detail: "Thank you for supporting Verbsy. Widgets and daily words are unlocked.")
+                    Link(destination: URL(string: "https://apps.apple.com/account/subscriptions")!) {
+                        SettingsRowContent(symbol: "person.crop.circle", title: "Manage subscription", detail: "Open Apple subscription settings.")
+                            .background(VerbsyDesign.surface)
+                            .clipShape(RoundedRectangle(cornerRadius: VerbsyDesign.radiusTile, style: .continuous))
+                            .overlay(RoundedRectangle(cornerRadius: VerbsyDesign.radiusTile, style: .continuous).stroke(VerbsyDesign.line))
+                    }
+                } else {
+                    EmptyStateCard(symbol: "sparkles", title: "Verbsy Pro", detail: "Unlock Home Screen widgets and word-of-the-day notifications. The feed and quizzes stay free.")
+                    Button {
+                        showPaywall = true
+                    } label: {
+                        Text("See plans")
+                            .font(.system(size: 18, weight: .bold, design: .default))
+                            .foregroundStyle(VerbsyDesign.onSage)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 58)
+                            .background(VerbsyDesign.sage)
+                            .clipShape(Capsule())
+                    }
+                    .buttonStyle(.plain)
+                }
+
+                Button { Task { await purchases.restore() } } label: {
+                    Text("Restore Purchases")
+                        .font(.system(size: 15, weight: .bold, design: .default))
+                        .foregroundStyle(VerbsyDesign.ink)
+                        .frame(maxWidth: .infinity)
+                }
+                .padding(.top, 4)
+            }
+            .padding(.horizontal, VerbsyDesign.pageGutter)
+            .padding(.vertical, 18)
+        }
+        .background(VerbsyDesign.background.ignoresSafeArea())
+        .navigationTitle("Verbsy Pro")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+// MARK: - Shared profile pieces
+
+private struct EmptyStateCard: View {
+    let symbol: String
+    let title: String
+    let detail: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Image(systemName: symbol)
+                .font(.system(size: 28, weight: .bold))
+                .foregroundStyle(VerbsyDesign.sage)
+            Text(title)
+                .font(VerbsyDesign.display(23))
+                .foregroundStyle(VerbsyDesign.ink)
+            Text(detail)
+                .font(.system(size: 16, weight: .medium, design: .default))
+                .foregroundStyle(VerbsyDesign.muted)
+                .lineSpacing(3)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(22)
+        .background(VerbsyDesign.surface)
+        .clipShape(RoundedRectangle(cornerRadius: VerbsyDesign.radiusCard, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: VerbsyDesign.radiusCard, style: .continuous).stroke(VerbsyDesign.line))
+    }
+}
+
+struct WordDetailSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var progress: LocalProgressStore
+    let word: VerbsyWord
+
+    var body: some View {
+        NavigationStack {
+            ScrollView(showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 18) {
+                    HStack(alignment: .top) {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text(word.word)
+                                .font(VerbsyDesign.display(44))
+                                .foregroundStyle(VerbsyDesign.ink)
+                            Text("\(word.pronunciation) · \(word.partOfSpeech)")
+                                .font(.system(size: 16, weight: .semibold, design: .default))
+                                .foregroundStyle(VerbsyDesign.sage)
+                        }
+                        Spacer()
+                        WordShareButton(word: word, compact: true)
+                    }
+
+                    Text(word.longDefinition)
+                        .font(.system(size: 20, weight: .semibold, design: .default))
+                        .foregroundStyle(VerbsyDesign.ink)
+                        .lineSpacing(4)
+
+                    detailBlock("Example", "“\(word.example)”", serif: true)
+                    if let second = word.secondExample {
+                        detailBlock("Another use", "“\(second)”", serif: true)
+                    }
+                    if let origin = word.origin {
+                        detailBlock("Origin", origin, serif: false)
+                    }
+                    if !word.synonyms.isEmpty {
+                        detailBlock("Similar words", word.synonyms.joined(separator: " · "), serif: false)
+                    }
+
+                    Button {
+                        Haptics.selection()
+                        progress.toggleFavorite(word)
+                    } label: {
+                        Label(progress.isFavorite(word) ? "Saved to favorites" : "Add to favorites",
+                              systemImage: progress.isFavorite(word) ? "heart.fill" : "heart")
+                            .font(.system(size: 18, weight: .bold, design: .default))
+                            .foregroundStyle(progress.isFavorite(word) ? VerbsyDesign.sage : VerbsyDesign.onSage)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 56)
+                            .background(progress.isFavorite(word) ? VerbsyDesign.sageSoft : VerbsyDesign.sage)
+                            .clipShape(Capsule())
+                    }
+                    .buttonStyle(.plain)
+                }
+                .padding(.horizontal, VerbsyDesign.pageGutter)
+                .padding(.vertical, 22)
+            }
+            .background(VerbsyDesign.background.ignoresSafeArea())
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") { dismiss() }
+                        .font(.system(size: 16, weight: .bold, design: .default))
+                        .foregroundStyle(VerbsyDesign.ink)
+                }
+            }
+        }
+    }
+
+    private func detailBlock(_ title: String, _ body: String, serif: Bool) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Eyebrow(text: title, color: VerbsyDesign.sage)
+            Text(body)
+                .font(serif ? .system(size: 18, weight: .regular, design: .serif) : .system(size: 16, weight: .medium, design: .default))
+                .italic(serif)
+                .foregroundStyle(VerbsyDesign.muted)
+                .lineSpacing(4)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(18)
+        .background(VerbsyDesign.surface)
+        .clipShape(RoundedRectangle(cornerRadius: VerbsyDesign.radiusTile, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: VerbsyDesign.radiusTile, style: .continuous).stroke(VerbsyDesign.line))
+    }
+}

@@ -117,12 +117,12 @@ private struct VerbsyWidgetView: View {
                 .font(.system(size: family == .accessoryRectangular ? 13 : 20, weight: .bold))
                 .foregroundStyle(palette.accent)
             Text(family == .accessoryCircular ? "Pro" : "Unlock daily words")
-                .font(.system(size: lockTitleSize, weight: .black, design: .rounded))
+                .font(.system(size: lockTitleSize, weight: .black, design: .default))
                 .lineLimit(family == .accessoryRectangular ? 1 : 3)
                 .minimumScaleFactor(0.72)
             if family != .accessoryCircular {
                 Text("Verbsy Pro")
-                    .font(.system(size: 11, weight: .bold, design: .rounded))
+                    .font(.system(size: 11, weight: .bold, design: .default))
                     .foregroundStyle(palette.secondary)
             }
         }
@@ -178,7 +178,7 @@ private struct VerbsyWidgetView: View {
                 definitionText(size: 16, lines: 3)
                 Divider().overlay(palette.secondary.opacity(0.28))
                 Text(entry.word.example)
-                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                    .font(.system(size: 13, weight: .semibold, design: .default))
                     .foregroundStyle(palette.secondary)
                     .lineLimit(3)
                     .minimumScaleFactor(0.8)
@@ -197,7 +197,7 @@ private struct VerbsyWidgetView: View {
             definitionText(size: 19, lines: 4)
             Spacer(minLength: 4)
             Text(entry.word.example)
-                .font(.system(size: 15, weight: .semibold, design: .rounded))
+                .font(.system(size: 15, weight: .semibold, design: .default))
                 .foregroundStyle(palette.secondary)
                 .lineLimit(4)
                 .minimumScaleFactor(0.78)
@@ -211,7 +211,7 @@ private struct VerbsyWidgetView: View {
         HStack(alignment: .top, spacing: 7) {
             if entry.theme != .clear {
                 Text(String(entry.word.word.prefix(1)))
-                    .font(.system(size: 15, weight: .black, design: .rounded))
+                    .font(.system(size: 15, weight: .black, design: .default))
                     .foregroundStyle(palette.accent)
                     .frame(width: 22, height: 22)
                     .background(palette.accent.opacity(0.13))
@@ -220,12 +220,12 @@ private struct VerbsyWidgetView: View {
 
             VStack(alignment: .leading, spacing: 1) {
                 Text(entry.word.word)
-                    .font(.system(size: 17, weight: .black, design: .rounded))
+                    .font(.system(size: 17, weight: .bold, design: .serif))
                     .lineLimit(1)
                     .minimumScaleFactor(0.56)
                     .allowsTightening(true)
                 Text(entry.word.shortDefinition)
-                    .font(.system(size: 10.8, weight: .semibold, design: .rounded))
+                    .font(.system(size: 10.8, weight: .semibold, design: .default))
                     .foregroundStyle(palette.secondary)
                     .lineLimit(2)
                     .minimumScaleFactor(0.72)
@@ -238,10 +238,10 @@ private struct VerbsyWidgetView: View {
     private var circularView: some View {
         VStack(spacing: 0) {
             Text(String(entry.word.word.prefix(1)))
-                .font(.system(size: 28, weight: .black, design: .rounded))
+                .font(.system(size: 28, weight: .bold, design: .serif))
                 .minimumScaleFactor(0.7)
             Text(entry.word.partOfSpeech.prefix(4))
-                .font(.system(size: 7.5, weight: .black, design: .rounded))
+                .font(.system(size: 7.5, weight: .black, design: .default))
                 .foregroundStyle(palette.secondary)
                 .minimumScaleFactor(0.7)
         }
@@ -249,7 +249,7 @@ private struct VerbsyWidgetView: View {
 
     private var inlineView: some View {
         Text("\(entry.word.word): \(entry.word.shortDefinition)")
-            .font(.system(size: 13, weight: .semibold, design: .rounded))
+            .font(.system(size: 13, weight: .semibold, design: .default))
             .lineLimit(1)
             .minimumScaleFactor(0.7)
     }
@@ -257,18 +257,18 @@ private struct VerbsyWidgetView: View {
     private var compactHeader: some View {
         HStack {
             Text("Verbsy")
-                .font(.system(size: 12, weight: .black, design: .rounded))
+                .font(.system(size: 12, weight: .black, design: .default))
                 .foregroundStyle(palette.secondary)
             Spacer()
             Text("Today")
-                .font(.system(size: 11, weight: .black, design: .rounded))
+                .font(.system(size: 11, weight: .black, design: .default))
                 .foregroundStyle(palette.accent)
         }
     }
 
     private func wordText(size: CGFloat) -> some View {
         Text(entry.word.word)
-            .font(.system(size: size, weight: .black, design: .rounded))
+            .font(.system(size: size, weight: .bold, design: .serif))
             .lineLimit(1)
             .minimumScaleFactor(0.52)
             .allowsTightening(true)
@@ -276,7 +276,7 @@ private struct VerbsyWidgetView: View {
 
     private func metaText(size: CGFloat) -> some View {
         Text("\(entry.word.pronunciation) · \(entry.word.partOfSpeech)")
-            .font(.system(size: size, weight: .black, design: .rounded))
+            .font(.system(size: size, weight: .black, design: .default))
             .foregroundStyle(palette.accent)
             .lineLimit(1)
             .minimumScaleFactor(0.76)
@@ -284,7 +284,7 @@ private struct VerbsyWidgetView: View {
 
     private func definitionText(size: CGFloat, lines: Int) -> some View {
         Text(entry.word.shortDefinition)
-            .font(.system(size: size, weight: .semibold, design: .rounded))
+            .font(.system(size: size, weight: .semibold, design: .default))
             .foregroundStyle(palette.secondary)
             .lineLimit(lines)
             .minimumScaleFactor(0.74)
@@ -331,20 +331,21 @@ private struct VerbsyWidgetPalette {
     init(theme: VerbsyWidgetTheme) {
         switch theme {
         case .paper:
-            background = Color(red: 0.985, green: 0.982, blue: 0.973)
-            primary = Color(red: 0.075, green: 0.07, blue: 0.095)
-            secondary = Color(red: 0.42, green: 0.42, blue: 0.44)
-            accent = Color(red: 0.24, green: 0.47, blue: 0.36)
+            // Sage Scholar — see brand_guide.md
+            background = Color(red: 0.980, green: 0.973, blue: 0.949) // #FAF8F2
+            primary = Color(red: 0.102, green: 0.098, blue: 0.086)    // #1A1916
+            secondary = Color(red: 0.420, green: 0.416, blue: 0.388)  // #6B6A63
+            accent = Color(red: 0.208, green: 0.420, blue: 0.322)     // #356B52 sage
         case .sage:
-            background = Color(red: 0.86, green: 0.91, blue: 0.86)
-            primary = Color(red: 0.09, green: 0.16, blue: 0.12)
-            secondary = Color(red: 0.24, green: 0.35, blue: 0.28)
-            accent = Color(red: 0.46, green: 0.34, blue: 0.15)
+            background = Color(red: 0.855, green: 0.890, blue: 0.835) // soft sage
+            primary = Color(red: 0.102, green: 0.160, blue: 0.120)
+            secondary = Color(red: 0.240, green: 0.350, blue: 0.280)
+            accent = Color(red: 0.208, green: 0.420, blue: 0.322)     // #356B52 sage
         case .ink:
-            background = Color(red: 0.075, green: 0.07, blue: 0.095)
-            primary = Color(red: 0.98, green: 0.965, blue: 0.91)
-            secondary = Color(red: 0.74, green: 0.73, blue: 0.70)
-            accent = Color(red: 0.82, green: 0.67, blue: 0.36)
+            background = Color(red: 0.102, green: 0.098, blue: 0.086) // #1A1916
+            primary = Color(red: 0.953, green: 0.945, blue: 0.914)    // warm off-white
+            secondary = Color(red: 0.643, green: 0.631, blue: 0.600)
+            accent = Color(red: 0.851, green: 0.659, blue: 0.353)     // #D9A85A gold
         case .mist:
             background = Color(red: 0.91, green: 0.94, blue: 0.95)
             primary = Color(red: 0.08, green: 0.10, blue: 0.13)

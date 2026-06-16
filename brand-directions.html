@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Verbsy — Brand Direction Explorer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --ui-bg: #0e0e10;
+    --ui-panel: #18181b;
+    --ui-text: #e7e7ea;
+    --ui-muted: #9a9aa2;
+    --ui-line: #2a2a2e;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Inter', -apple-system, system-ui, sans-serif;
+    background: var(--ui-bg);
+    color: var(--ui-text);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    padding: 0 0 120px;
+  }
+
+  /* ---------- Page header ---------- */
+  .page-head {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 72px 32px 40px;
+    text-align: center;
+  }
+  .kicker {
+    font-size: 12px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ui-muted);
+    font-weight: 600;
+  }
+  .page-head h1 {
+    font-family: 'Playfair Display', serif;
+    font-weight: 600;
+    font-size: clamp(2.4rem, 5vw, 3.6rem);
+    letter-spacing: -0.01em;
+    margin: 14px 0 16px;
+  }
+  .page-head p {
+    color: var(--ui-muted);
+    max-width: 620px;
+    margin: 0 auto;
+    font-size: 1.02rem;
+  }
+  .legend {
+    display: flex;
+    gap: 22px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 28px;
+    font-size: 13px;
+    color: var(--ui-muted);
+  }
+  .legend span { display: inline-flex; align-items: center; gap: 8px; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; }
+
+  /* ---------- Direction grid ---------- */
+  .grid {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 0 32px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 28px;
+  }
+  @media (max-width: 980px) { .grid { grid-template-columns: 1fr; max-width: 460px; } }
+
+  .col-head { margin-bottom: 18px; }
+  .col-head .num {
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ui-muted);
+    font-weight: 600;
+  }
+  .col-head h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.7rem;
+    font-weight: 600;
+    margin: 6px 0 8px;
+  }
+  .col-head .mood { color: var(--ui-muted); font-size: 0.92rem; }
+
+  /* ---------- Mock phone (the actual vibe) ---------- */
+  .phone {
+    border-radius: 38px;
+    padding: 14px;
+    background: var(--phone-shell, #222);
+    box-shadow: 0 30px 60px -20px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04);
+  }
+  .screen {
+    border-radius: 26px;
+    overflow: hidden;
+    background: var(--bg);
+    color: var(--ink);
+    aspect-ratio: 9 / 17;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+  .statusbar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 22px 4px;
+    font-size: 12px; font-weight: 600; color: var(--ink);
+  }
+  .statusbar .dots { display: flex; gap: 4px; }
+  .statusbar .dots i { width: 5px; height: 5px; border-radius: 50%; background: var(--ink); opacity: 0.5; }
+
+  .screen-body { flex: 1; padding: 10px 22px 0; overflow: hidden; }
+
+  .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
+  .wordmark { display: flex; align-items: center; gap: 9px; }
+  .logo {
+    width: 30px; height: 30px; border-radius: 9px;
+    background: var(--ink); color: var(--bg);
+    display: grid; place-items: center;
+    font-family: 'Playfair Display', serif; font-weight: 700; font-size: 16px;
+    position: relative;
+  }
+  .logo::after {
+    content: ""; position: absolute; top: -3px; right: -3px;
+    width: 9px; height: 9px; border-radius: 50%; background: var(--gold);
+    box-shadow: 0 0 0 2.5px var(--bg);
+  }
+  .wordmark b { font-weight: 700; font-size: 16px; letter-spacing: -0.01em; }
+  .streak {
+    font-size: 12px; font-weight: 600; color: var(--gold);
+    background: var(--gold-soft); padding: 5px 11px; border-radius: 999px;
+    display: inline-flex; align-items: center; gap: 5px;
+  }
+
+  .eyebrow {
+    font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--muted); font-weight: 600; margin-bottom: 14px;
+  }
+
+  /* word card */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 22px;
+    padding: 22px 20px;
+    box-shadow: 0 12px 30px -18px rgba(0,0,0,0.25);
+  }
+  .pos { font-style: italic; color: var(--sig); font-family: 'Playfair Display', serif; font-size: 14px; }
+  .word {
+    font-family: 'Playfair Display', serif;
+    font-weight: 600;
+    font-size: 2.15rem;
+    letter-spacing: -0.01em;
+    margin: 2px 0 4px;
+    color: var(--ink);
+  }
+  .phonetic { color: var(--muted); font-size: 13px; margin-bottom: 14px; }
+  .def { font-size: 14.5px; color: var(--ink); margin-bottom: 12px; }
+  .example {
+    font-family: 'Playfair Display', serif; font-style: italic;
+    font-size: 14px; color: var(--muted);
+    border-left: 2px solid var(--sig);
+    padding-left: 12px;
+  }
+
+  .btn-row { display: flex; gap: 10px; margin-top: 18px; }
+  .btn {
+    flex: 1; text-align: center; padding: 13px; border-radius: 14px;
+    font-size: 13.5px; font-weight: 600; cursor: default;
+  }
+  .btn-primary { background: var(--sig); color: var(--on-sig); }
+  .btn-ghost { background: var(--surface); color: var(--ink); border: 1px solid var(--line); }
+
+  /* progress chips */
+  .chips { display: flex; gap: 8px; margin-top: 20px; }
+  .chip {
+    flex: 1; background: var(--surface); border: 1px solid var(--line);
+    border-radius: 14px; padding: 12px 10px; text-align: center;
+  }
+  .chip .n { font-family:'Playfair Display',serif; font-weight: 700; font-size: 1.25rem; color: var(--ink); }
+  .chip .l { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 2px; }
+
+  /* bottom tab bar */
+  .tabbar {
+    display: flex; justify-content: space-around; align-items: center;
+    padding: 14px 22px 22px; border-top: 1px solid var(--line);
+    background: var(--bg);
+  }
+  .tab { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 10px; color: var(--muted); font-weight: 500; }
+  .tab.active { color: var(--sig); }
+  .tab svg { width: 22px; height: 22px; }
+
+  /* ---------- palette strip ---------- */
+  .palette { margin-top: 22px; }
+  .palette h3 {
+    font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--ui-muted); font-weight: 600; margin-bottom: 10px;
+  }
+  .swatches { display: grid; grid-template-columns: repeat(7, 1fr); gap: 7px; }
+  .sw { border-radius: 9px; aspect-ratio: 1; border: 1px solid var(--ui-line); position: relative; }
+  .sw small {
+    position: absolute; bottom: -16px; left: 0; right: 0; text-align: center;
+    font-size: 8.5px; color: var(--ui-muted); letter-spacing: 0.02em;
+  }
+  .swrow { margin-bottom: 24px; }
+
+  .notes {
+    margin-top: 16px; padding: 16px 18px; border-radius: 14px;
+    background: var(--ui-panel); border: 1px solid var(--ui-line);
+    font-size: 13px; color: var(--ui-muted);
+  }
+  .notes b { color: var(--ui-text); font-weight: 600; }
+
+  .foot {
+    max-width: 1180px; margin: 60px auto 0; padding: 0 32px; text-align: center;
+    color: var(--ui-muted); font-size: 14px;
+  }
+  .foot code { background: var(--ui-panel); padding: 2px 7px; border-radius: 6px; color: var(--ui-text); font-size: 13px; }
+</style>
+</head>
+<body>
+
+  <header class="page-head">
+    <div class="kicker">Verbsy · Brand Direction Explorer</div>
+    <h1>Three premium directions, one shared soul</h1>
+    <p>All three share warm-paper backgrounds, deep-ink text, an editorial serif for words, and gold reserved for achievement. They differ only in the <em>signature hue</em> — the one calming color that sets the emotional tone.</p>
+    <div class="legend">
+      <span><i class="dot" style="background:#356B52"></i> Sage Scholar</span>
+      <span><i class="dot" style="background:#2B5C8A"></i> Quiet Intelligence</span>
+      <span><i class="dot" style="background:#6B6191"></i> Soft Focus</span>
+    </div>
+  </header>
+
+  <div class="grid">
+
+    <!-- ============ DIRECTION 1: SAGE SCHOLAR ============ -->
+    <section style="
+      --bg:#FAF8F2; --surface:#FFFFFF; --ink:#1A1916; --muted:#6B6A63;
+      --line:#E7E4D9; --sig:#356B52; --on-sig:#FFFFFF; --gold:#BE8A3D;
+      --gold-soft:#F3E9D4; --phone-shell:#2c2a24;">
+      <div class="col-head">
+        <div class="num">Direction 01</div>
+        <h2>Sage Scholar</h2>
+        <div class="mood">Calm · literary · grounded — growth &amp; balance</div>
+      </div>
+
+      <div class="phone">
+        <div class="screen">
+          <div class="statusbar"><span>9:41</span><span class="dots"><i></i><i></i><i></i></span></div>
+          <div class="screen-body">
+            <div class="topbar">
+              <div class="wordmark"><div class="logo">V</div><b>Verbsy</b></div>
+              <div class="streak">◆ 14 day streak</div>
+            </div>
+            <div class="eyebrow">Today's word</div>
+            <div class="card">
+              <div class="pos">adjective</div>
+              <div class="word">Sonorous</div>
+              <div class="phonetic">/ˈsɒn.ər.əs/</div>
+              <div class="def">Imposingly deep and full in sound; rich and resonant.</div>
+              <div class="example">"Her sonorous voice filled the quiet hall."</div>
+            </div>
+            <div class="btn-row">
+              <div class="btn btn-primary">Mark learned</div>
+              <div class="btn btn-ghost">Save</div>
+            </div>
+            <div class="chips">
+              <div class="chip"><div class="n">14</div><div class="l">Streak</div></div>
+              <div class="chip"><div class="n">212</div><div class="l">Learned</div></div>
+              <div class="chip"><div class="n">9</div><div class="l">To review</div></div>
+            </div>
+          </div>
+          <nav class="tabbar">
+            <div class="tab active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v10h14V10"/></svg>Today</div>
+            <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 5h16M4 12h16M4 19h10"/></svg>Review</div>
+            <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/></svg>Library</div>
+          </nav>
+        </div>
+      </div>
+
+      <div class="palette">
+        <h3>Palette</h3>
+        <div class="swatches">
+          <div class="sw" style="background:#FAF8F2"><small>Paper</small></div>
+          <div class="sw" style="background:#FFFFFF"><small>Card</small></div>
+          <div class="sw" style="background:#1A1916"><small>Ink</small></div>
+          <div class="sw" style="background:#6B6A63"><small>Muted</small></div>
+          <div class="sw" style="background:#356B52"><small>Sage</small></div>
+          <div class="sw" style="background:#BE8A3D"><small>Gold</small></div>
+          <div class="sw" style="background:#E7E4D9"><small>Line</small></div>
+        </div>
+      </div>
+      <div class="notes" style="margin-top:34px;">
+        <b>Why it works:</b> Muted sage = growth, calm, balance. Few apps own green well, so it's distinctive. Reads as a beautiful hardback and a quiet study. Evolves your current prototype.
+      </div>
+    </section>
+
+    <!-- ============ DIRECTION 2: QUIET INTELLIGENCE ============ -->
+    <section style="
+      --bg:#F7F6F2; --surface:#FFFFFF; --ink:#16181D; --muted:#62656E;
+      --line:#E5E4DE; --sig:#2B5C8A; --on-sig:#FFFFFF; --gold:#D69A3C;
+      --gold-soft:#F6E7CC; --phone-shell:#23262c;">
+      <div class="col-head">
+        <div class="num">Direction 02</div>
+        <h2>Quiet Intelligence</h2>
+        <div class="mood">Trust · focus · clarity — broadest appeal</div>
+      </div>
+
+      <div class="phone">
+        <div class="screen">
+          <div class="statusbar"><span>9:41</span><span class="dots"><i></i><i></i><i></i></span></div>
+          <div class="screen-body">
+            <div class="topbar">
+              <div class="wordmark"><div class="logo">V</div><b>Verbsy</b></div>
+              <div class="streak">◆ 14 day streak</div>
+            </div>
+            <div class="eyebrow">Today's word</div>
+            <div class="card">
+              <div class="pos">adjective</div>
+              <div class="word">Sonorous</div>
+              <div class="phonetic">/ˈsɒn.ər.əs/</div>
+              <div class="def">Imposingly deep and full in sound; rich and resonant.</div>
+              <div class="example">"Her sonorous voice filled the quiet hall."</div>
+            </div>
+            <div class="btn-row">
+              <div class="btn btn-primary">Mark learned</div>
+              <div class="btn btn-ghost">Save</div>
+            </div>
+            <div class="chips">
+              <div class="chip"><div class="n">14</div><div class="l">Streak</div></div>
+              <div class="chip"><div class="n">212</div><div class="l">Learned</div></div>
+              <div class="chip"><div class="n">9</div><div class="l">To review</div></div>
+            </div>
+          </div>
+          <nav class="tabbar">
+            <div class="tab active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v10h14V10"/></svg>Today</div>
+            <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 5h16M4 12h16M4 19h10"/></svg>Review</div>
+            <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/></svg>Library</div>
+          </nav>
+        </div>
+      </div>
+
+      <div class="palette">
+        <h3>Palette</h3>
+        <div class="swatches">
+          <div class="sw" style="background:#F7F6F2"><small>Paper</small></div>
+          <div class="sw" style="background:#FFFFFF"><small>Card</small></div>
+          <div class="sw" style="background:#16181D"><small>Ink</small></div>
+          <div class="sw" style="background:#62656E"><small>Muted</small></div>
+          <div class="sw" style="background:#2B5C8A"><small>Blue</small></div>
+          <div class="sw" style="background:#D69A3C"><small>Amber</small></div>
+          <div class="sw" style="background:#E5E4DE"><small>Line</small></div>
+        </div>
+      </div>
+      <div class="notes" style="margin-top:34px;">
+        <b>Why it works:</b> Blue is the most universally liked hue across people and cultures — the safest pick for the widest audience. Ink-blue signals intelligence, trust and focus; warm amber keeps it from feeling cold or corporate.
+      </div>
+    </section>
+
+    <!-- ============ DIRECTION 3: SOFT FOCUS ============ -->
+    <section style="
+      --bg:#F6F4F1; --surface:#FBFAF8; --ink:#211E26; --muted:#6C6776;
+      --line:#E6E2DD; --sig:#6B6191; --on-sig:#FFFFFF; --gold:#B0894F;
+      --gold-soft:#EFE6D6; --phone-shell:#2a2630;">
+      <div class="col-head">
+        <div class="num">Direction 03</div>
+        <h2>Soft Focus</h2>
+        <div class="mood">Contemplative · editorial · refined</div>
+      </div>
+
+      <div class="phone">
+        <div class="screen">
+          <div class="statusbar"><span>9:41</span><span class="dots"><i></i><i></i><i></i></span></div>
+          <div class="screen-body">
+            <div class="topbar">
+              <div class="wordmark"><div class="logo">V</div><b>Verbsy</b></div>
+              <div class="streak">◆ 14 day streak</div>
+            </div>
+            <div class="eyebrow">Today's word</div>
+            <div class="card">
+              <div class="pos">adjective</div>
+              <div class="word">Sonorous</div>
+              <div class="phonetic">/ˈsɒn.ər.əs/</div>
+              <div class="def">Imposingly deep and full in sound; rich and resonant.</div>
+              <div class="example">"Her sonorous voice filled the quiet hall."</div>
+            </div>
+            <div class="btn-row">
+              <div class="btn btn-primary">Mark learned</div>
+              <div class="btn btn-ghost">Save</div>
+            </div>
+            <div class="chips">
+              <div class="chip"><div class="n">14</div><div class="l">Streak</div></div>
+              <div class="chip"><div class="n">212</div><div class="l">Learned</div></div>
+              <div class="chip"><div class="n">9</div><div class="l">To review</div></div>
+            </div>
+          </div>
+          <nav class="tabbar">
+            <div class="tab active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v10h14V10"/></svg>Today</div>
+            <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 5h16M4 12h16M4 19h10"/></svg>Review</div>
+            <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/></svg>Library</div>
+          </nav>
+        </div>
+      </div>
+
+      <div class="palette">
+        <h3>Palette</h3>
+        <div class="swatches">
+          <div class="sw" style="background:#F6F4F1"><small>Greige</small></div>
+          <div class="sw" style="background:#FBFAF8"><small>Card</small></div>
+          <div class="sw" style="background:#211E26"><small>Ink</small></div>
+          <div class="sw" style="background:#6C6776"><small>Muted</small></div>
+          <div class="sw" style="background:#6B6191"><small>Heather</small></div>
+          <div class="sw" style="background:#B0894F"><small>Brass</small></div>
+          <div class="sw" style="background:#E6E2DD"><small>Line</small></div>
+        </div>
+      </div>
+      <div class="notes" style="margin-top:34px;">
+        <b>Why it works:</b> Muted heather/lavender is "the thinking color" — contemplation and understated luxury. The most editorial, design-forward and distinctive of the three. Slightly more refined/niche taste.
+      </div>
+    </section>
+
+  </div>
+
+  <p class="foot">
+    Fonts: <code>Playfair Display</code> (words &amp; headings) + <code>Inter</code> (UI &amp; body) — the canonical premium/editorial pairing.<br />
+    Tell me which direction feels right and I'll build out the full design system (light + dark mode, full token set, and apply it to the iOS app + landing page).
+  </p>
+
+</body>
+</html>

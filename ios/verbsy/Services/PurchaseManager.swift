@@ -5,9 +5,8 @@ import StoreKit
 @MainActor
 final class PurchaseManager: ObservableObject {
     static let productIds = [
-        "verbsy.pro.weekly",
-        "verbsy.pro.monthly",
         "verbsy.pro.annual",
+        "verbsy.pro.monthly",
     ]
 
     @Published private(set) var products: [Product] = []

@@ -22,11 +22,11 @@ private struct SplashView: View {
 
                 VStack(spacing: 6) {
                     Text("Verbsy")
-                        .font(.system(size: 42, weight: .black, design: .rounded))
+                        .font(VerbsyDesign.display(40))
                         .foregroundStyle(AppStyle.ink)
 
                     Text("A sharper word for every day.")
-                        .font(.system(size: 17, weight: .medium, design: .rounded))
+                        .font(.system(size: 17, weight: .medium, design: .default))
                         .foregroundStyle(AppStyle.muted)
                 }
                 .opacity(markOpacity)
@@ -44,7 +44,7 @@ private struct SplashView: View {
 struct OnboardingView: View {
     @EnvironmentObject private var purchases: PurchaseManager
 
-    let onCompleted: (Bool) -> Void
+    let onCompleted: (_ wantsReminders: Bool, _ topics: [String]) -> Void
 
     @State private var step = 0
     @State private var data = OnboardingData()
@@ -62,7 +62,8 @@ struct OnboardingView: View {
                     ProgressHeader(
                         progress: min(CGFloat(step) / CGFloat(totalSteps), 1),
                         canGoBack: step > 1,
-                        onBack: back
+                        onBack: back,
+                        onSkip: skipHandler
                     )
                 }
 
@@ -121,17 +122,20 @@ struct OnboardingView: View {
         case 4:
             MultiChoiceQuestion(
                 title: "Choose the topics you care about",
-                subtitle: "Pick at least two. We will personalize your daily words.",
+                subtitle: "Pick a few, or tap Skip to be surprised with a mix.",
                 options: [
-                    .init(title: "Psychology", subtitle: nil, symbol: "brain.head.profile"),
-                    .init(title: "Emotions", subtitle: nil, symbol: "heart.fill"),
-                    .init(title: "Writing", subtitle: nil, symbol: "pencil.tip.crop.circle"),
-                    .init(title: "Philosophy", subtitle: nil, symbol: "building.columns.fill"),
-                    .init(title: "Productivity", subtitle: nil, symbol: "bolt.fill"),
-                    .init(title: "Relationships", subtitle: nil, symbol: "person.2.fill")
+                    .init(title: "Everyday Life", subtitle: nil, symbol: "cup.and.saucer.fill"),
+                    .init(title: "People & Character", subtitle: nil, symbol: "person.fill"),
+                    .init(title: "Work & Ambition", subtitle: nil, symbol: "briefcase.fill"),
+                    .init(title: "Mind & Ideas", subtitle: nil, symbol: "brain.head.profile"),
+                    .init(title: "Words & Communication", subtitle: nil, symbol: "text.bubble.fill"),
+                    .init(title: "Emotions & Relationships", subtitle: nil, symbol: "heart.fill"),
+                    .init(title: "Science & Nature", subtitle: nil, symbol: "leaf.fill"),
+                    .init(title: "Culture & Society", subtitle: nil, symbol: "building.columns.fill"),
+                    .init(title: "Beautiful & Rare", subtitle: nil, symbol: "sparkles")
                 ],
                 selections: $data.topics,
-                minimumSelections: 2,
+                minimumSelections: 1,
                 onContinue: next
             )
         case 5:
@@ -202,14 +206,19 @@ struct OnboardingView: View {
             StorePaywallView(
                 canContinueFree: true,
                 onContinueFree: {
-                    onCompleted(data.reminders == "Yes")
+                    onCompleted(data.reminders == "Yes", Array(data.topics))
                 },
                 onCompleted: {
-                    onCompleted(data.reminders == "Yes")
+                    onCompleted(data.reminders == "Yes", Array(data.topics))
                 }
             )
             .environmentObject(purchases)
         }
+    }
+
+    private var skipHandler: (() -> Void)? {
+        guard (1...12).contains(step) else { return nil }
+        return { next() }
     }
 
     private func next() {
@@ -347,21 +356,21 @@ private struct WelcomeScreen: View {
 
             VStack(spacing: 28) {
                 DailyWordPreview()
-                    .padding(.horizontal, 28)
+                    .padding(.horizontal, 24)
 
                 VStack(spacing: 12) {
                     Text("Build a sharper vocabulary")
-                        .font(.system(size: 44, weight: .black, design: .rounded))
+                        .font(VerbsyDesign.display(42))
                         .multilineTextAlignment(.center)
                         .foregroundStyle(AppStyle.ink)
                         .minimumScaleFactor(0.78)
 
                     Text("One powerful word each day, chosen for how you want to think, write, and speak.")
-                        .font(.system(size: 18, weight: .medium, design: .rounded))
+                        .font(.system(size: 18, weight: .medium, design: .default))
                         .foregroundStyle(AppStyle.muted)
                         .multilineTextAlignment(.center)
                         .lineSpacing(3)
-                        .padding(.horizontal, 28)
+                        .padding(.horizontal, 24)
                 }
             }
 
@@ -452,13 +461,13 @@ private struct QuestionContainer<Content: View>: View {
             VStack(alignment: .leading, spacing: 32) {
                 VStack(alignment: .leading, spacing: 18) {
                     Text(title)
-                        .font(.system(size: 38, weight: .black, design: .rounded))
+                        .font(VerbsyDesign.display(36))
                         .foregroundStyle(AppStyle.ink)
                         .lineSpacing(-1)
                         .minimumScaleFactor(0.76)
 
                     Text(subtitle)
-                        .font(.system(size: 19, weight: .medium, design: .rounded))
+                        .font(.system(size: 19, weight: .medium, design: .default))
                         .foregroundStyle(AppStyle.muted)
                         .lineSpacing(3)
                 }
@@ -467,7 +476,7 @@ private struct QuestionContainer<Content: View>: View {
                 content
                     .padding(.bottom, 110)
             }
-            .padding(.horizontal, 28)
+            .padding(.horizontal, 24)
         }
     }
 }
@@ -486,13 +495,13 @@ private struct ValueInterstitial: View {
 
                 VStack(spacing: 14) {
                     Text(title)
-                        .font(.system(size: 38, weight: .black, design: .rounded))
+                        .font(VerbsyDesign.display(36))
                         .foregroundStyle(AppStyle.ink)
                         .multilineTextAlignment(.center)
                         .lineSpacing(-1)
 
                     Text(subtitle)
-                        .font(.system(size: 18, weight: .medium, design: .rounded))
+                        .font(.system(size: 18, weight: .medium, design: .default))
                         .foregroundStyle(AppStyle.muted)
                         .multilineTextAlignment(.center)
                         .lineSpacing(3)
@@ -515,7 +524,7 @@ private struct SocialProofScreen: View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 28) {
                 Text("Join learners building a more precise voice")
-                    .font(.system(size: 38, weight: .black, design: .rounded))
+                    .font(VerbsyDesign.display(36))
                     .foregroundStyle(AppStyle.ink)
                     .lineSpacing(-1)
                     .padding(.top, 28)
@@ -535,7 +544,7 @@ private struct SocialProofScreen: View {
                     text: "It makes vocabulary feel premium and practical. The daily format is short enough to keep."
                 )
             }
-            .padding(.horizontal, 28)
+            .padding(.horizontal, 24)
             .padding(.bottom, 110)
         }
         .safeAreaInset(edge: .bottom) {
@@ -553,21 +562,21 @@ private struct DailyLearningPreviewScreen: View {
 
             VStack(spacing: 26) {
                 DailyWordPreview()
-                    .padding(.horizontal, 28)
+                    .padding(.horizontal, 24)
 
                 VStack(spacing: 12) {
                     Text("Learn with one word of the day")
-                        .font(.system(size: 38, weight: .black, design: .rounded))
+                        .font(VerbsyDesign.display(36))
                         .foregroundStyle(AppStyle.ink)
                         .multilineTextAlignment(.center)
                         .lineSpacing(-1)
 
                     Text("A precise word, a memorable example, and a tiny recall loop. No clutter, no endless lessons.")
-                        .font(.system(size: 18, weight: .medium, design: .rounded))
+                        .font(.system(size: 18, weight: .medium, design: .default))
                         .foregroundStyle(AppStyle.muted)
                         .multilineTextAlignment(.center)
                         .lineSpacing(3)
-                        .padding(.horizontal, 28)
+                        .padding(.horizontal, 24)
                 }
             }
 
@@ -591,38 +600,38 @@ private struct NotificationPreviewScreen: View {
                     HStack(spacing: 10) {
                         VerbsyMark(size: 34)
                         Text("VERBSY")
-                            .font(.system(size: 13, weight: .black, design: .rounded))
+                            .font(.system(size: 13, weight: .black, design: .default))
                             .foregroundStyle(AppStyle.muted)
                         Spacer()
                         Text("now")
-                            .font(.system(size: 13, weight: .bold, design: .rounded))
+                            .font(.system(size: 13, weight: .bold, design: .default))
                             .foregroundStyle(AppStyle.muted)
                     }
 
                     Text("Your Verbsy word is ready")
-                        .font(.system(size: 20, weight: .black, design: .rounded))
+                        .font(.system(size: 20, weight: .black, design: .default))
                         .foregroundStyle(AppStyle.ink)
 
                     Text("Take one minute to add a sharper word to your day.")
-                        .font(.system(size: 17, weight: .medium, design: .rounded))
+                        .font(.system(size: 17, weight: .medium, design: .default))
                         .foregroundStyle(AppStyle.muted)
                 }
                 .padding(20)
-                .background(.white.opacity(0.94))
+                .background(AppStyle.surface.opacity(0.94))
                 .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
                 .overlay(RoundedRectangle(cornerRadius: 28, style: .continuous).stroke(AppStyle.line))
                 .shadow(color: .black.opacity(0.08), radius: 24, x: 0, y: 14)
-                .padding(.horizontal, 28)
+                .padding(.horizontal, 24)
 
                 VStack(spacing: 12) {
                     Text("A gentle reminder, not a noisy app")
-                        .font(.system(size: 38, weight: .black, design: .rounded))
+                        .font(VerbsyDesign.display(36))
                         .foregroundStyle(AppStyle.ink)
                         .multilineTextAlignment(.center)
                         .lineSpacing(-1)
 
                     Text("Verbsy helps you protect the habit with one clean daily nudge.")
-                        .font(.system(size: 18, weight: .medium, design: .rounded))
+                        .font(.system(size: 18, weight: .medium, design: .default))
                         .foregroundStyle(AppStyle.muted)
                         .multilineTextAlignment(.center)
                         .lineSpacing(3)
@@ -653,21 +662,21 @@ private struct WidgetPreviewScreen: View {
                         LockScreenWidgetMock()
                     }
                 }
-                .padding(.horizontal, 28)
+                .padding(.horizontal, 24)
 
                 VStack(spacing: 12) {
                     Text("Put better words on your screen")
-                        .font(.system(size: 38, weight: .black, design: .rounded))
+                        .font(VerbsyDesign.display(36))
                         .foregroundStyle(AppStyle.ink)
                         .multilineTextAlignment(.center)
                         .lineSpacing(-1)
 
                     Text("Pro includes Home Screen and Lock Screen widgets for your word of the day.")
-                        .font(.system(size: 18, weight: .medium, design: .rounded))
+                        .font(.system(size: 18, weight: .medium, design: .default))
                         .foregroundStyle(AppStyle.muted)
                         .multilineTextAlignment(.center)
                         .lineSpacing(3)
-                        .padding(.horizontal, 28)
+                        .padding(.horizontal, 24)
                 }
             }
 
@@ -697,18 +706,18 @@ private struct WidgetMockCard: View {
             Spacer()
 
             Text(word)
-                .font(.system(size: size > 100 ? 25 : 16, weight: .black, design: .rounded))
+                .font(.system(size: size > 100 ? 25 : 16, weight: .black, design: .default))
                 .foregroundStyle(AppStyle.ink)
                 .minimumScaleFactor(0.75)
 
             Text(definition)
-                .font(.system(size: size > 100 ? 13 : 9, weight: .semibold, design: .rounded))
+                .font(.system(size: size > 100 ? 13 : 9, weight: .semibold, design: .default))
                 .foregroundStyle(AppStyle.muted)
                 .lineLimit(size > 100 ? 3 : 2)
         }
         .padding(size > 100 ? 16 : 10)
         .frame(width: size, height: size)
-        .background(.white)
+        .background(AppStyle.surface)
         .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 28, style: .continuous).stroke(AppStyle.line))
         .shadow(color: .black.opacity(0.07), radius: 18, x: 0, y: 10)
@@ -722,16 +731,16 @@ private struct LockScreenWidgetMock: View {
                 .font(.system(size: 14, weight: .bold))
             VStack(alignment: .leading, spacing: 2) {
                 Text("Sonder")
-                    .font(.system(size: 14, weight: .black, design: .rounded))
+                    .font(.system(size: 14, weight: .black, design: .default))
                 Text("Everyone has a hidden inner life.")
-                    .font(.system(size: 10, weight: .semibold, design: .rounded))
+                    .font(.system(size: 10, weight: .semibold, design: .default))
                     .lineLimit(1)
             }
         }
         .foregroundStyle(AppStyle.ink)
         .padding(.horizontal, 12)
         .frame(width: 122, height: 54)
-        .background(.white)
+        .background(AppStyle.surface)
         .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).stroke(AppStyle.line))
     }
@@ -761,11 +770,11 @@ private struct GeneratePlanIntro: View {
 
                 VStack(spacing: 12) {
                     Label("All done", systemImage: "checkmark.circle.fill")
-                        .font(.system(size: 20, weight: .bold, design: .rounded))
+                        .font(.system(size: 20, weight: .bold, design: .default))
                         .foregroundStyle(AppStyle.sage)
 
                     Text("Time to generate your personal word plan")
-                        .font(.system(size: 39, weight: .black, design: .rounded))
+                        .font(VerbsyDesign.display(37))
                         .foregroundStyle(AppStyle.ink)
                         .multilineTextAlignment(.center)
                         .lineSpacing(-1)
@@ -796,11 +805,11 @@ private struct GeneratingPlanScreen: View {
 
             VStack(spacing: 18) {
                 Text("\(Int(progress * 100))%")
-                    .font(.system(size: 84, weight: .black, design: .rounded))
+                    .font(VerbsyDesign.display(80))
                     .foregroundStyle(AppStyle.ink)
 
                 Text("We're setting everything up for you")
-                    .font(.system(size: 34, weight: .black, design: .rounded))
+                    .font(VerbsyDesign.display(33))
                     .foregroundStyle(AppStyle.ink)
                     .multilineTextAlignment(.center)
                     .lineSpacing(-1)
@@ -815,7 +824,7 @@ private struct GeneratingPlanScreen: View {
 
             VStack(alignment: .leading, spacing: 17) {
                 Text("Daily plan includes")
-                    .font(.system(size: 22, weight: .black, design: .rounded))
+                    .font(.system(size: 22, weight: .black, design: .default))
 
                 PlanGeneratingRow(text: "Word difficulty calibrated to \(level.isEmpty ? "your level" : level.lowercased())")
                 PlanGeneratingRow(text: "Topics shaped around \(topics.isEmpty ? "your interests" : topics.prefix(2).joined(separator: " and "))")
@@ -858,7 +867,7 @@ private struct PlanRevealScreen: View {
                         .foregroundStyle(AppStyle.ink)
 
                     Text("Your daily word plan is ready")
-                        .font(.system(size: 38, weight: .black, design: .rounded))
+                        .font(VerbsyDesign.display(36))
                         .foregroundStyle(AppStyle.ink)
                         .multilineTextAlignment(.center)
                         .lineSpacing(-1)
@@ -874,7 +883,7 @@ private struct PlanRevealScreen: View {
                 }
                 .padding(.bottom, 112)
             }
-            .padding(.horizontal, 28)
+            .padding(.horizontal, 24)
         }
         .safeAreaInset(edge: .bottom) {
             PrimaryBottomButton(title: "Let's get started", action: onContinue)
@@ -891,7 +900,7 @@ private struct SuccessPlanScreen: View {
             VStack(spacing: 22) {
                 VStack(alignment: .leading, spacing: 16) {
                     Text("How Verbsy will help you improve")
-                        .font(.system(size: 34, weight: .black, design: .rounded))
+                        .font(VerbsyDesign.display(33))
                         .foregroundStyle(AppStyle.ink)
 
                     VStack(spacing: 12) {
@@ -911,7 +920,7 @@ private struct SuccessPlanScreen: View {
 
                 VStack(alignment: .leading, spacing: 16) {
                     Text("Why Verbsy?")
-                        .font(.system(size: 28, weight: .black, design: .rounded))
+                        .font(VerbsyDesign.display(27))
 
                     ComparisonRow(symbol: "xmark", tint: .red, text: "Random vocabulary lists are hard to remember")
                     ComparisonRow(symbol: "xmark", tint: .red, text: "Dictionary definitions rarely become daily language")
@@ -919,7 +928,7 @@ private struct SuccessPlanScreen: View {
                     ComparisonRow(symbol: "checkmark", tint: AppStyle.sage, text: "Your plan adapts to \(data.goal.isEmpty ? "your goals" : data.goal.lowercased())")
                 }
                 .padding(20)
-                .background(.white)
+                .background(AppStyle.surface)
                 .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
                 .overlay(
                     RoundedRectangle(cornerRadius: 28, style: .continuous)
@@ -927,7 +936,7 @@ private struct SuccessPlanScreen: View {
                 )
                 .padding(.bottom, 112)
             }
-            .padding(.horizontal, 28)
+            .padding(.horizontal, 24)
             .padding(.top, 24)
         }
         .safeAreaInset(edge: .bottom) {
@@ -948,12 +957,12 @@ private struct SaveProgressScreen: View {
 
                 VStack(spacing: 12) {
                     Text("Save your progress")
-                        .font(.system(size: 42, weight: .black, design: .rounded))
+                        .font(VerbsyDesign.display(40))
                         .foregroundStyle(AppStyle.ink)
                         .multilineTextAlignment(.center)
 
                     Text("For now, Verbsy runs locally on this device. Accounts and syncing can be added later.")
-                        .font(.system(size: 18, weight: .medium, design: .rounded))
+                        .font(.system(size: 18, weight: .medium, design: .default))
                         .foregroundStyle(AppStyle.muted)
                         .multilineTextAlignment(.center)
                         .lineSpacing(3)
@@ -965,16 +974,16 @@ private struct SaveProgressScreen: View {
                         Image(systemName: "iphone")
                             .font(.system(size: 24, weight: .semibold))
                         Text("Continue on this device")
-                            .font(.system(size: 20, weight: .bold, design: .rounded))
+                            .font(.system(size: 20, weight: .bold, design: .default))
                     }
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
                     .frame(height: 66)
-                    .background(AppStyle.ink)
+                    .background(AppStyle.sage)
                     .clipShape(Capsule())
                 }
                 .buttonStyle(.plain)
-                .padding(.horizontal, 28)
+                .padding(.horizontal, 24)
             }
 
             Spacer()
@@ -989,7 +998,7 @@ private struct PaywallScreen: View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: 24) {
                 Text("Start your 3-day FREE trial to continue")
-                    .font(.system(size: 40, weight: .black, design: .rounded))
+                    .font(VerbsyDesign.display(38))
                     .foregroundStyle(AppStyle.ink)
                     .multilineTextAlignment(.center)
                     .lineSpacing(-1)
@@ -1009,38 +1018,38 @@ private struct PaywallScreen: View {
                 }
 
                 Label("No Payment Due Now", systemImage: "checkmark")
-                    .font(.system(size: 25, weight: .black, design: .rounded))
+                    .font(.system(size: 25, weight: .black, design: .default))
                     .foregroundStyle(AppStyle.ink)
 
                 Button(action: onStartTrial) {
                     Text("Start My 3-Day Free Trial")
-                        .font(.system(size: 21, weight: .black, design: .rounded))
+                        .font(.system(size: 21, weight: .black, design: .default))
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
                         .frame(height: 72)
-                        .background(AppStyle.ink)
+                        .background(AppStyle.sage)
                         .clipShape(Capsule())
                 }
                 .buttonStyle(.plain)
 
                 VStack(spacing: 12) {
                     Text("Already purchased?")
-                        .font(.system(size: 18, weight: .medium, design: .rounded))
+                        .font(.system(size: 18, weight: .medium, design: .default))
                         .foregroundStyle(AppStyle.muted)
 
                     Text("3 days free, then $29.99 per year. Plan auto-renews unless canceled. StoreKit will be connected later.")
-                        .font(.system(size: 16, weight: .medium, design: .rounded))
+                        .font(.system(size: 16, weight: .medium, design: .default))
                         .foregroundStyle(AppStyle.muted)
                         .multilineTextAlignment(.center)
                         .lineSpacing(2)
 
                     Text("Terms - Privacy - Restore")
-                        .font(.system(size: 15, weight: .medium, design: .rounded))
+                        .font(.system(size: 15, weight: .medium, design: .default))
                         .foregroundStyle(AppStyle.muted)
                 }
                 .padding(.bottom, 36)
             }
-            .padding(.horizontal, 28)
+            .padding(.horizontal, 24)
         }
     }
 }
@@ -1049,6 +1058,7 @@ private struct ProgressHeader: View {
     let progress: CGFloat
     let canGoBack: Bool
     let onBack: () -> Void
+    var onSkip: (() -> Void)? = nil
 
     var body: some View {
         HStack(spacing: 18) {
@@ -1075,8 +1085,17 @@ private struct ProgressHeader: View {
                 }
             }
             .frame(height: 5)
+
+            if let onSkip {
+                Button(action: onSkip) {
+                    Text("Skip")
+                        .font(.system(size: 16, weight: .bold, design: .default))
+                        .foregroundStyle(AppStyle.muted)
+                }
+                .buttonStyle(.plain)
+            }
         }
-        .padding(.horizontal, 28)
+        .padding(.horizontal, 24)
         .padding(.top, 12)
         .padding(.bottom, 8)
     }
@@ -1102,14 +1121,14 @@ private struct ChoiceTile: View {
 
                 VStack(alignment: .leading, spacing: 5) {
                     Text(option.title)
-                        .font(.system(size: 22, weight: .bold, design: .rounded))
+                        .font(.system(size: 22, weight: .bold, design: .default))
                         .foregroundStyle(AppStyle.ink)
                         .lineLimit(2)
                         .minimumScaleFactor(0.84)
 
                     if let subtitle = option.subtitle {
                         Text(subtitle)
-                            .font(.system(size: 15.5, weight: .medium, design: .rounded))
+                            .font(.system(size: 15.5, weight: .medium, design: .default))
                             .foregroundStyle(AppStyle.muted)
                             .lineLimit(2)
                     }
@@ -1149,13 +1168,13 @@ private struct PrimaryBottomButton: View {
                 action()
             }) {
                 Text(title)
-                    .font(.system(size: 21, weight: .black, design: .rounded))
+                    .font(.system(size: 21, weight: .black, design: .default))
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
                     .frame(height: 68)
-                    .background(isEnabled ? AppStyle.ink : AppStyle.disabled)
+                    .background(isEnabled ? AppStyle.sage : AppStyle.disabled)
                     .clipShape(Capsule())
-                    .padding(.horizontal, 28)
+                    .padding(.horizontal, 24)
                     .padding(.top, 16)
                     .padding(.bottom, 12)
             }
@@ -1172,7 +1191,7 @@ private struct DailyWordPreview: View {
                 VerbsyMark(size: 46)
                 Spacer()
                 Text("Day 1")
-                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                    .font(.system(size: 16, weight: .bold, design: .default))
                     .foregroundStyle(AppStyle.muted)
                     .padding(.horizontal, 14)
                     .padding(.vertical, 8)
@@ -1182,11 +1201,11 @@ private struct DailyWordPreview: View {
 
             VStack(alignment: .leading, spacing: 14) {
                 Text("Sonder")
-                    .font(.system(size: 48, weight: .black, design: .rounded))
+                    .font(VerbsyDesign.display(46))
                     .foregroundStyle(AppStyle.ink)
 
                 Text("The realization that every person has an inner life as vivid and complex as your own.")
-                    .font(.system(size: 19, weight: .medium, design: .rounded))
+                    .font(.system(size: 19, weight: .medium, design: .default))
                     .foregroundStyle(AppStyle.muted)
                     .lineSpacing(3)
             }
@@ -1199,7 +1218,7 @@ private struct DailyWordPreview: View {
             }
         }
         .padding(22)
-        .background(.white)
+        .background(AppStyle.surface)
         .clipShape(RoundedRectangle(cornerRadius: 34, style: .continuous))
         .shadow(color: .black.opacity(0.08), radius: 24, x: 0, y: 14)
         .overlay(
@@ -1217,11 +1236,11 @@ private struct WordPlanCard: View {
             HStack {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("Your first word")
-                        .font(.system(size: 17, weight: .bold, design: .rounded))
+                        .font(.system(size: 17, weight: .bold, design: .default))
                         .foregroundStyle(AppStyle.muted)
 
                     Text(word.word)
-                        .font(.system(size: 48, weight: .black, design: .rounded))
+                        .font(VerbsyDesign.display(46))
                         .foregroundStyle(AppStyle.ink)
                 }
 
@@ -1236,23 +1255,23 @@ private struct WordPlanCard: View {
             }
 
             Text(word.pronunciation)
-                .font(.system(size: 17, weight: .bold, design: .rounded))
+                .font(.system(size: 17, weight: .bold, design: .default))
                 .foregroundStyle(AppStyle.sage)
 
             Divider()
 
             Text(word.meaning)
-                .font(.system(size: 19, weight: .semibold, design: .rounded))
+                .font(.system(size: 19, weight: .semibold, design: .default))
                 .foregroundStyle(AppStyle.ink)
                 .lineSpacing(4)
 
             Text(word.useCase)
-                .font(.system(size: 16, weight: .medium, design: .rounded))
+                .font(.system(size: 16, weight: .medium, design: .default))
                 .foregroundStyle(AppStyle.muted)
                 .lineSpacing(3)
         }
         .padding(22)
-        .background(.white)
+        .background(AppStyle.surface)
         .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 30, style: .continuous)
@@ -1287,7 +1306,7 @@ private struct StickinessChart: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
             Text("Word recall")
-                .font(.system(size: 20, weight: .black, design: .rounded))
+                .font(.system(size: 20, weight: .black, design: .default))
 
             ZStack(alignment: .bottomLeading) {
                 RoundedRectangle(cornerRadius: 24, style: .continuous)
@@ -1310,10 +1329,10 @@ private struct StickinessChart: View {
 
                 VStack(alignment: .leading, spacing: 8) {
                     Label("Verbsy review loop", systemImage: "sparkles")
-                        .font(.system(size: 15, weight: .bold, design: .rounded))
+                        .font(.system(size: 15, weight: .bold, design: .default))
                         .foregroundStyle(AppStyle.sage)
                     Text("Random lists")
-                        .font(.system(size: 15, weight: .bold, design: .rounded))
+                        .font(.system(size: 15, weight: .bold, design: .default))
                         .foregroundStyle(AppStyle.muted)
                 }
                 .padding(18)
@@ -1323,7 +1342,7 @@ private struct StickinessChart: View {
         .padding(18)
         .background(AppStyle.panel)
         .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
-        .padding(.horizontal, 28)
+        .padding(.horizontal, 24)
     }
 }
 
@@ -1340,16 +1359,16 @@ private struct ProofMetric: View {
                 .foregroundStyle(tint)
 
             Text(value)
-                .font(.system(size: 34, weight: .black, design: .rounded))
+                .font(VerbsyDesign.display(33))
                 .foregroundStyle(AppStyle.ink)
 
             Text(label)
-                .font(.system(size: 15, weight: .bold, design: .rounded))
+                .font(.system(size: 15, weight: .bold, design: .default))
                 .foregroundStyle(AppStyle.muted)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(18)
-        .background(.white)
+        .background(AppStyle.surface)
         .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 24, style: .continuous)
@@ -1373,12 +1392,12 @@ private struct TestimonialCard: View {
                 }
                 Spacer()
                 Text(name)
-                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                    .font(.system(size: 16, weight: .bold, design: .default))
                     .foregroundStyle(AppStyle.muted)
             }
 
             Text(text)
-                .font(.system(size: 19, weight: .medium, design: .rounded))
+                .font(.system(size: 19, weight: .medium, design: .default))
                 .foregroundStyle(AppStyle.ink)
                 .lineSpacing(3)
         }
@@ -1404,11 +1423,11 @@ private struct PlanInfoRow: View {
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
-                    .font(.system(size: 15, weight: .bold, design: .rounded))
+                    .font(.system(size: 15, weight: .bold, design: .default))
                     .foregroundStyle(AppStyle.muted)
 
                 Text(value)
-                    .font(.system(size: 20, weight: .bold, design: .rounded))
+                    .font(.system(size: 20, weight: .bold, design: .default))
                     .foregroundStyle(AppStyle.ink)
                     .lineLimit(2)
                     .minimumScaleFactor(0.85)
@@ -1421,7 +1440,7 @@ private struct PlanInfoRow: View {
                 .foregroundStyle(AppStyle.muted.opacity(0.55))
         }
         .padding(18)
-        .background(.white)
+        .background(AppStyle.surface)
         .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 24, style: .continuous)
@@ -1444,17 +1463,17 @@ private struct MethodRow: View {
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
-                    .font(.system(size: 19, weight: .black, design: .rounded))
+                    .font(.system(size: 19, weight: .black, design: .default))
                     .foregroundStyle(AppStyle.ink)
                 Text(detail)
-                    .font(.system(size: 15, weight: .medium, design: .rounded))
+                    .font(.system(size: 15, weight: .medium, design: .default))
                     .foregroundStyle(AppStyle.muted)
                     .lineSpacing(2)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
-        .background(.white)
+        .background(AppStyle.surface)
         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
     }
 }
@@ -1472,7 +1491,7 @@ private struct ComparisonRow: View {
                 .frame(width: 28, height: 28)
 
             Text(text)
-                .font(.system(size: 18, weight: .medium, design: .rounded))
+                .font(.system(size: 18, weight: .medium, design: .default))
                 .foregroundStyle(AppStyle.ink)
                 .lineSpacing(2)
         }
@@ -1484,7 +1503,7 @@ private struct PlanGeneratingRow: View {
 
     var body: some View {
         Label(text, systemImage: "checkmark.circle.fill")
-            .font(.system(size: 18, weight: .semibold, design: .rounded))
+            .font(.system(size: 18, weight: .semibold, design: .default))
             .foregroundStyle(AppStyle.ink)
             .labelStyle(.titleAndIcon)
     }
@@ -1517,10 +1536,10 @@ private struct TimelineRow: View {
 
             VStack(alignment: .leading, spacing: 6) {
                 Text(title)
-                    .font(.system(size: 23, weight: .black, design: .rounded))
+                    .font(.system(size: 23, weight: .black, design: .default))
                     .foregroundStyle(AppStyle.ink)
                 Text(detail)
-                    .font(.system(size: 17, weight: .medium, design: .rounded))
+                    .font(.system(size: 17, weight: .medium, design: .default))
                     .foregroundStyle(AppStyle.muted)
                     .lineSpacing(3)
             }
@@ -1538,7 +1557,7 @@ private struct PlanOption: View {
         VStack(alignment: .leading, spacing: 8) {
             if let badge {
                 Text(badge)
-                    .font(.system(size: 12, weight: .black, design: .rounded))
+                    .font(.system(size: 12, weight: .black, design: .default))
                     .foregroundStyle(.white)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)
@@ -1551,9 +1570,9 @@ private struct PlanOption: View {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 8) {
                     Text(title)
-                        .font(.system(size: 22, weight: .bold, design: .rounded))
+                        .font(.system(size: 22, weight: .bold, design: .default))
                     Text(price)
-                        .font(.system(size: 24, weight: .black, design: .rounded))
+                        .font(.system(size: 24, weight: .black, design: .default))
                 }
 
                 Spacer()
@@ -1565,7 +1584,7 @@ private struct PlanOption: View {
         }
         .frame(maxWidth: .infinity, minHeight: 112, alignment: .topLeading)
         .padding(18)
-        .background(.white)
+        .background(AppStyle.surface)
         .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 24, style: .continuous)
@@ -1584,7 +1603,7 @@ private struct MiniStat: View {
                 .font(.system(size: 18, weight: .bold))
                 .foregroundStyle(AppStyle.ink)
             Text(title)
-                .font(.system(size: 13, weight: .bold, design: .rounded))
+                .font(.system(size: 13, weight: .bold, design: .default))
                 .foregroundStyle(AppStyle.muted)
         }
         .frame(maxWidth: .infinity)
@@ -1594,17 +1613,20 @@ private struct MiniStat: View {
     }
 }
 
+/// Onboarding style tokens forward to the unified Sage Scholar system
+/// in `VerbsyDesign` (see brand_guide.md) so there is one source of truth.
 private enum AppStyle {
-    static let background = Color(red: 0.985, green: 0.982, blue: 0.973)
-    static let panel = Color(red: 0.948, green: 0.947, blue: 0.936)
-    static let selectedTile = Color(red: 0.925, green: 0.941, blue: 0.918)
-    static let line = Color(red: 0.878, green: 0.876, blue: 0.86)
-    static let ink = Color(red: 0.075, green: 0.07, blue: 0.095)
-    static let muted = Color(red: 0.50, green: 0.50, blue: 0.52)
-    static let disabled = Color(red: 0.72, green: 0.72, blue: 0.73)
-    static let sage = Color(red: 0.24, green: 0.47, blue: 0.36)
-    static let gold = Color(red: 0.82, green: 0.61, blue: 0.27)
-    static let softBlue = Color(red: 0.87, green: 0.91, blue: 0.96)
+    static let background = VerbsyDesign.background
+    static let surface = VerbsyDesign.surface
+    static let panel = VerbsyDesign.panel
+    static let selectedTile = VerbsyDesign.sageSoft
+    static let line = VerbsyDesign.line
+    static let ink = VerbsyDesign.ink
+    static let muted = VerbsyDesign.muted
+    static let disabled = VerbsyDesign.disabled
+    static let sage = VerbsyDesign.sage
+    static let gold = VerbsyDesign.gold
+    static let softBlue = VerbsyDesign.sageSoft
 }
 
 enum Haptics {

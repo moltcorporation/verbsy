@@ -12,6 +12,8 @@ struct verbsyApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                // Sage Scholar is a warm-paper, light-first identity (see brand_guide.md).
+                .preferredColorScheme(.light)
         }
     }
 }
