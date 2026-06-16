@@ -149,6 +149,18 @@ struct QuizBatchResponse: Codable {
     let nextOffset: Int?
 }
 
+/// Wrappers that give each scrolled card a unique, stable identity so the
+/// feed/quiz can recycle words infinitely without SwiftUI id collisions.
+struct FeedItem: Identifiable, Hashable {
+    let id: Int
+    let word: VerbsyWord
+}
+
+struct QuizEntry: Identifiable, Hashable {
+    let id: Int
+    let item: QuizBatchItem
+}
+
 /// Locally-stored progress. No accounts — everything lives on device.
 struct LocalProgress: Codable {
     static let dailyGoal = 5

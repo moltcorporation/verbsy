@@ -25,7 +25,7 @@ struct LearnView: View {
                 .padding(.top, 6)
         }
         .task {
-            if content.feedWords.isEmpty {
+            if content.feedItems.isEmpty {
                 await content.loadFeedPage(topics: prefs.selectedTopics, difficulties: prefs.effectiveDifficulties, reset: true)
             }
         }
@@ -73,43 +73,43 @@ private struct WordFeedView: View {
     @EnvironmentObject private var progress: LocalProgressStore
     @EnvironmentObject private var prefs: PreferencesStore
 
-    @State private var currentSlug: String?
+    @State private var currentId: Int?
 
     var body: some View {
         Group {
-            if content.feedWords.isEmpty {
+            if content.feedItems.isEmpty {
                 FeedLoadingView()
             } else {
                 ScrollView(.vertical, showsIndicators: false) {
                     LazyVStack(spacing: 0) {
-                        ForEach(content.feedWords) { word in
-                            WordCardView(word: word)
+                        ForEach(content.feedItems) { item in
+                            WordCardView(word: item.word)
                                 .containerRelativeFrame(.vertical)
-                                .id(word.slug)
+                                .id(item.id)
                         }
                     }
                     .scrollTargetLayout()
                 }
                 .scrollTargetBehavior(.paging)
-                .scrollPosition(id: $currentSlug)
+                .scrollPosition(id: $currentId)
                 .ignoresSafeArea()
-                .onChange(of: currentSlug) { _, slug in
-                    guard let slug, let word = content.feedWords.first(where: { $0.slug == slug }) else { return }
-                    progress.recordSeen(word)
-                    loadMoreIfNeeded(currentSlug: slug)
+                .onChange(of: currentId) { _, id in
+                    guard let id, let item = content.feedItems.first(where: { $0.id == id }) else { return }
+                    progress.recordSeen(item.word)
+                    loadMoreIfNeeded(currentId: id)
                 }
                 .onAppear {
-                    if currentSlug == nil, let first = content.feedWords.first {
-                        progress.recordSeen(first)
+                    if currentId == nil, let first = content.feedItems.first {
+                        progress.recordSeen(first.word)
                     }
                 }
             }
         }
     }
 
-    private func loadMoreIfNeeded(currentSlug slug: String) {
-        guard let index = content.feedWords.firstIndex(where: { $0.slug == slug }) else { return }
-        if index >= content.feedWords.count - 4 {
+    private func loadMoreIfNeeded(currentId id: Int) {
+        guard let index = content.feedItems.firstIndex(where: { $0.id == id }) else { return }
+        if index >= content.feedItems.count - 4 {
             Task { await content.loadFeedPage(topics: prefs.selectedTopics, difficulties: prefs.effectiveDifficulties) }
         }
     }
@@ -220,19 +220,19 @@ private struct QuizFeedView: View {
     @EnvironmentObject private var content: VerbsyContentStore
     @EnvironmentObject private var prefs: PreferencesStore
 
-    @State private var currentId: String?
+    @State private var currentId: Int?
 
     var body: some View {
         Group {
-            if content.quizItems.isEmpty {
+            if content.quizEntries.isEmpty {
                 FeedLoadingView()
             } else {
                 ScrollView(.vertical, showsIndicators: false) {
                     LazyVStack(spacing: 0) {
-                        ForEach(content.quizItems) { item in
-                            QuizCardView(item: item)
+                        ForEach(content.quizEntries) { entry in
+                            QuizCardView(item: entry.item)
                                 .containerRelativeFrame(.vertical)
-                                .id(item.id)
+                                .id(entry.id)
                         }
                     }
                     .scrollTargetLayout()
@@ -241,15 +241,15 @@ private struct QuizFeedView: View {
                 .scrollPosition(id: $currentId)
                 .ignoresSafeArea()
                 .onChange(of: currentId) { _, id in
-                    guard let id, let index = content.quizItems.firstIndex(where: { $0.id == id }) else { return }
-                    if index >= content.quizItems.count - 3 {
+                    guard let id, let index = content.quizEntries.firstIndex(where: { $0.id == id }) else { return }
+                    if index >= content.quizEntries.count - 3 {
                         Task { await content.loadQuizBatch(topics: prefs.selectedTopics, difficulties: prefs.effectiveDifficulties) }
                     }
                 }
             }
         }
         .task {
-            if content.quizItems.isEmpty {
+            if content.quizEntries.isEmpty {
                 await content.loadQuizBatch(topics: prefs.selectedTopics, difficulties: prefs.effectiveDifficulties, reset: true)
             }
         }
