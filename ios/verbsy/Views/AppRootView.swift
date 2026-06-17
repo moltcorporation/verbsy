@@ -60,6 +60,10 @@ struct AppRootView: View {
                 showPaywall = true
             case "today", "learn":
                 selectedTab = 1
+            case "profile", "you":
+                selectedTab = 2
+            case "home":
+                selectedTab = 0
             default:
                 break
             }

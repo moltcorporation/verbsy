@@ -1,0 +1,29 @@
+default_platform(:ios)
+
+platform :ios do
+  # Uploads App Store listing metadata + screenshots only.
+  # Never uploads a binary and never auto-submits for review.
+  #
+  #   export ASC_KEY_ID=...        # App Store Connect API Key ID
+  #   export ASC_ISSUER_ID=...     # Issuer ID
+  #   export ASC_KEY_PATH=/abs/path/AuthKey_XXXX.p8
+  #   fastlane ios upload_listing
+  desc "Upload App Store metadata + screenshots (no binary, no submit)"
+  lane :upload_listing do
+    api_key = app_store_connect_api_key(
+      key_id: ENV["ASC_KEY_ID"],
+      issuer_id: ENV["ASC_ISSUER_ID"],
+      key_filepath: ENV["ASC_KEY_PATH"]
+    )
+    deliver(
+      api_key: api_key,
+      app_identifier: "com.moltcorporation.verbsy",
+      skip_binary_upload: true,
+      force: true,                    # skip the HTML preview prompt
+      submit_for_review: false,       # you review + submit in App Store Connect
+      overwrite_screenshots: true,
+      run_precheck_before_submit: false,
+      precheck_include_in_app_purchases: false
+    )
+  end
+end

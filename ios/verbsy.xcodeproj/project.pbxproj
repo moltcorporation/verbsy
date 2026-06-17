@@ -348,6 +348,7 @@
 				DEVELOPMENT_TEAM = 46696JNF4G;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = VerbsyInfo.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Verbsy;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -381,6 +382,7 @@
 				DEVELOPMENT_TEAM = 46696JNF4G;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = VerbsyInfo.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Verbsy;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
