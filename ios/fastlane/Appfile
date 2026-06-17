@@ -1,5 +1,0 @@
-app_identifier("com.moltcorporation.verbsy")
-# Optional — only needed if you authenticate with an Apple ID instead of an API key:
-# apple_id(ENV["ASC_APPLE_ID"])
-# team_id("XXXXXXXXXX")   # Apple Developer Program Team ID
-# itc_team_id("XXXXXXXX") # App Store Connect Team ID (if you belong to several)

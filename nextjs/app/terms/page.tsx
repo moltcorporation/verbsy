@@ -10,10 +10,10 @@ export default function TermsPage() {
           educational use.
         </p>
         <p>
-          Verbsy Pro is an auto-renewable subscription available in weekly,
-          monthly, and annual durations. The subscription unlocks Pro features
-          including widgets, review, topic browsing, saved words, and the full
-          vocabulary archive.
+          Verbsy Pro is an auto-renewable subscription available in monthly and
+          annual durations. The subscription unlocks Pro features including
+          word-of-the-day notifications and premium Home Screen and Lock Screen
+          widget styles.
         </p>
         <p>
           Subscriptions are billed through Apple. The full renewal price is shown
@@ -22,6 +22,10 @@ export default function TermsPage() {
           Your Apple Account will be charged for renewal within 24 hours before
           the end of the current period. You can manage or cancel your
           subscription in your App Store account settings.
+        </p>
+        <p>
+          Apple&apos;s standard End User License Agreement applies:
+          https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
         </p>
         <p>
           Purchases are final except as required by Apple policies or applicable

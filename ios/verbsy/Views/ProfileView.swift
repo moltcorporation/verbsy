@@ -19,6 +19,7 @@ struct ProfileView: View {
     @EnvironmentObject private var prefs: PreferencesStore
 
     @Binding var showPaywall: Bool
+    @Binding var requestedRoute: ProfileRoute?
 
     @State private var path: [ProfileRoute] = []
     @State private var showResetConfirmation = false
@@ -89,6 +90,11 @@ struct ProfileView: View {
             .background(VerbsyDesign.background.ignoresSafeArea())
             .navigationDestination(for: ProfileRoute.self) { destination in
                 ProfileDestinationView(route: destination, showPaywall: $showPaywall)
+            }
+            .onChange(of: requestedRoute) { _, route in
+                guard let route else { return }
+                path = [route]
+                requestedRoute = nil
             }
             .confirmationDialog("Reset local progress?", isPresented: $showResetConfirmation, titleVisibility: .visible) {
                 Button("Reset Progress", role: .destructive) { progress.resetAll() }
@@ -414,7 +420,7 @@ private struct WidgetsHelpView: View {
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 16) {
-                Text("Put a sharper word on your Home and Lock Screen.")
+                Text("Put a daily word on your Home and Lock Screen.")
                     .font(VerbsyDesign.display(24))
                     .foregroundStyle(VerbsyDesign.ink)
 
@@ -531,7 +537,7 @@ private struct NotificationsSettingsView: View {
 
                     Text(prefs.wordsPerDay > 1
                          ? "We’ll space \(prefs.wordsPerDay) words from your start time through the evening."
-                         : "One sharp word each day, drawn from your chosen topics.")
+                         : "One new word each day, drawn from your chosen topics.")
                         .font(.system(size: 13, weight: .medium, design: .default))
                         .foregroundStyle(VerbsyDesign.muted)
                         .padding(.horizontal, 4)

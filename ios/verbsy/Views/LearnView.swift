@@ -2,10 +2,17 @@ import SwiftUI
 
 /// The core experience. A horizontal pager between an infinite word feed and an
 /// infinite quiz — slide sideways to switch, like a TikTok feed.
+enum LearnMode: Int {
+    case words = 0
+    case quiz = 1
+}
+
 struct LearnView: View {
     @EnvironmentObject private var content: VerbsyContentStore
     @EnvironmentObject private var prefs: PreferencesStore
 
+    @Binding var requestedMode: LearnMode?
+    @Binding var requestedWordSlug: String?
     @State private var mode = 0 // 0 = Words, 1 = Quiz
 
     var body: some View {
@@ -13,7 +20,7 @@ struct LearnView: View {
             VerbsyDesign.background.ignoresSafeArea()
 
             TabView(selection: $mode) {
-                WordFeedView()
+                WordFeedView(requestedWordSlug: $requestedWordSlug)
                     .tag(0)
                 QuizFeedView()
                     .tag(1)
@@ -31,6 +38,13 @@ struct LearnView: View {
         }
         .onChange(of: prefs.selectedTopics) { _, _ in reloadForPreferences() }
         .onChange(of: prefs.difficulties) { _, _ in reloadForPreferences() }
+        .onChange(of: requestedMode) { _, requested in
+            guard let requested else { return }
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.9)) {
+                mode = requested.rawValue
+            }
+            requestedMode = nil
+        }
     }
 
     /// Rebuild the feed + quiz when the user changes topics or difficulty so what
@@ -41,6 +55,12 @@ struct LearnView: View {
             await content.loadQuizBatch(topics: prefs.selectedTopics, difficulties: prefs.effectiveDifficulties, reset: true)
         }
     }
+}
+
+private enum LearnFeedLayout {
+    static let contentTopPadding: CGFloat = 64
+    static let wordContentBottomPadding: CGFloat = 120
+    static let quizContentBottomPadding: CGFloat = 126
 }
 
 private struct LearnModeSwitcher: View {
@@ -84,6 +104,7 @@ private struct WordFeedView: View {
     @EnvironmentObject private var progress: LocalProgressStore
     @EnvironmentObject private var prefs: PreferencesStore
 
+    @Binding var requestedWordSlug: String?
     @State private var currentId: Int?
 
     var body: some View {
@@ -91,27 +112,41 @@ private struct WordFeedView: View {
             if content.feedItems.isEmpty {
                 FeedLoadingView()
             } else {
-                ScrollView(.vertical, showsIndicators: false) {
-                    LazyVStack(spacing: 0) {
-                        ForEach(content.feedItems) { item in
-                            WordCardView(word: item.word)
-                                .containerRelativeFrame(.vertical)
-                                .id(item.id)
+                GeometryReader { proxy in
+                    ScrollView(.vertical, showsIndicators: false) {
+                        LazyVStack(spacing: 0) {
+                            ForEach(content.feedItems) { item in
+                                WordCardView(word: item.word)
+                                    .frame(height: proxy.size.height)
+                                    .id(item.id)
+                                    .scrollTransition(.interactive, axis: .vertical) { content, phase in
+                                        content
+                                            .opacity(phase.isIdentity ? 1 : 0.78)
+                                            .scaleEffect(phase.isIdentity ? 1 : 0.985)
+                                    }
+                            }
                         }
+                        .scrollTargetLayout()
                     }
-                    .scrollTargetLayout()
+                    .scrollTargetBehavior(.paging)
+                    .scrollPosition(id: $currentId)
                 }
-                .scrollTargetBehavior(.paging)
-                .scrollPosition(id: $currentId)
                 .ignoresSafeArea()
                 .onChange(of: currentId) { _, id in
                     guard let id, let item = content.feedItems.first(where: { $0.id == id }) else { return }
                     progress.recordSeen(item.word)
                     loadMoreIfNeeded(currentId: id)
                 }
+                .onChange(of: requestedWordSlug) { _, slug in
+                    guard let slug else { return }
+                    focusRequestedWord(slug)
+                }
                 .onAppear {
                     if currentId == nil, let first = content.feedItems.first {
                         progress.recordSeen(first.word)
+                    }
+                    if let requestedWordSlug {
+                        focusRequestedWord(requestedWordSlug)
                     }
                 }
             }
@@ -123,6 +158,20 @@ private struct WordFeedView: View {
         if index >= content.feedItems.count - 4 {
             Task { await content.loadFeedPage(topics: prefs.selectedTopics, difficulties: prefs.effectiveDifficulties) }
         }
+    }
+
+    private func focusRequestedWord(_ slug: String) {
+        guard let id = content.focusWord(slug: slug) else {
+            requestedWordSlug = nil
+            return
+        }
+        withAnimation(.spring(response: 0.32, dampingFraction: 0.9)) {
+            currentId = id
+        }
+        if let item = content.feedItems.first(where: { $0.id == id }) {
+            progress.recordSeen(item.word)
+        }
+        requestedWordSlug = nil
     }
 }
 
@@ -195,30 +244,12 @@ private struct WordCardView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, VerbsyDesign.pageGutter)
             .padding(.trailing, 56)
-            .padding(.top, 80)
-            .padding(.bottom, 96)
+            .padding(.top, LearnFeedLayout.contentTopPadding)
+            .padding(.bottom, LearnFeedLayout.wordContentBottomPadding)
 
-            // TikTok-style control column
-            VStack(spacing: 16) {
-                Button {
-                    Haptics.selection()
-                    progress.toggleFavorite(word)
-                } label: {
-                    Image(systemName: isFavorite ? "heart.fill" : "heart")
-                        .font(.system(size: 22, weight: .semibold))
-                        .foregroundStyle(isFavorite ? VerbsyDesign.onSage : VerbsyDesign.ink)
-                        .frame(width: 54, height: 54)
-                        .background(isFavorite ? VerbsyDesign.sage : VerbsyDesign.surface)
-                        .clipShape(Circle())
-                        .overlay(Circle().stroke(VerbsyDesign.line))
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel(isFavorite ? "Remove favorite" : "Add favorite")
-
-                WordShareButton(word: word)
+            FeedActionRail(word: word, isFavorite: isFavorite) {
+                progress.toggleFavorite(word)
             }
-            .padding(.trailing, VerbsyDesign.pageGutter)
-            .padding(.bottom, 110)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(VerbsyDesign.background)
@@ -238,18 +269,25 @@ private struct QuizFeedView: View {
             if content.quizEntries.isEmpty {
                 FeedLoadingView()
             } else {
-                ScrollView(.vertical, showsIndicators: false) {
-                    LazyVStack(spacing: 0) {
-                        ForEach(content.quizEntries) { entry in
-                            QuizCardView(item: entry.item)
-                                .containerRelativeFrame(.vertical)
-                                .id(entry.id)
+                GeometryReader { proxy in
+                    ScrollView(.vertical, showsIndicators: false) {
+                        LazyVStack(spacing: 0) {
+                            ForEach(content.quizEntries) { entry in
+                                QuizCardView(item: entry.item)
+                                    .frame(height: proxy.size.height)
+                                    .id(entry.id)
+                                    .scrollTransition(.interactive, axis: .vertical) { content, phase in
+                                        content
+                                            .opacity(phase.isIdentity ? 1 : 0.78)
+                                            .scaleEffect(phase.isIdentity ? 1 : 0.985)
+                                    }
+                            }
                         }
+                        .scrollTargetLayout()
                     }
-                    .scrollTargetLayout()
+                    .scrollTargetBehavior(.paging)
+                    .scrollPosition(id: $currentId)
                 }
-                .scrollTargetBehavior(.paging)
-                .scrollPosition(id: $currentId)
                 .ignoresSafeArea()
                 .onChange(of: currentId) { _, id in
                     guard let id, let index = content.quizEntries.firstIndex(where: { $0.id == id }) else { return }
@@ -277,10 +315,10 @@ private struct QuizCardView: View {
     private var isFavorite: Bool { progress.isFavorite(item.word) }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Spacer(minLength: 0)
+        ZStack(alignment: .bottomTrailing) {
+            VStack(alignment: .leading, spacing: 0) {
+                Spacer(minLength: 0)
 
-            HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 4) {
                     Eyebrow(text: "What does this mean?", color: VerbsyDesign.sage)
                     Text(item.word.word)
@@ -294,62 +332,48 @@ private struct QuizCardView: View {
                         .foregroundStyle(VerbsyDesign.muted)
                         .padding(.top, 4)
                 }
-                Spacer(minLength: 8)
-                VStack(spacing: 10) {
-                    Button {
-                        Haptics.selection()
-                        progress.toggleFavorite(item.word)
-                    } label: {
-                        Image(systemName: isFavorite ? "heart.fill" : "heart")
-                            .font(.system(size: 18, weight: .semibold))
-                            .foregroundStyle(isFavorite ? VerbsyDesign.onSage : VerbsyDesign.ink)
-                            .frame(width: 44, height: 44)
-                            .background(isFavorite ? VerbsyDesign.sage : VerbsyDesign.surface)
-                            .clipShape(Circle())
-                            .overlay(Circle().stroke(VerbsyDesign.line))
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel(isFavorite ? "Remove favorite" : "Add favorite")
 
-                    WordShareButton(word: item.word, compact: true)
-                }
-            }
-
-            VStack(spacing: 12) {
-                ForEach(item.options) { option in
-                    QuizOptionRow(
-                        text: option.shortDefinition,
-                        state: state(for: option)
-                    ) {
-                        select(option)
+                VStack(spacing: 12) {
+                    ForEach(item.options) { option in
+                        QuizOptionRow(
+                            text: option.shortDefinition,
+                            state: state(for: option)
+                        ) {
+                            select(option)
+                        }
                     }
                 }
+                .padding(.top, 24)
+
+                if answered {
+                    Text("“\(item.word.example)”")
+                        .font(.system(size: 17, weight: .regular, design: .serif))
+                        .italic()
+                        .foregroundStyle(VerbsyDesign.muted)
+                        .lineSpacing(3)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.top, 18)
+                        .transition(.opacity)
+
+                    Text("Swipe up for the next word")
+                        .font(.system(size: 13, weight: .semibold, design: .default))
+                        .foregroundStyle(VerbsyDesign.muted)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(.top, 14)
+                }
+
+                Spacer(minLength: 0)
             }
-            .padding(.top, 24)
+            .padding(.horizontal, VerbsyDesign.pageGutter)
+            .padding(.top, LearnFeedLayout.contentTopPadding)
+            .padding(.bottom, LearnFeedLayout.quizContentBottomPadding)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
 
-            if answered {
-                Text("“\(item.word.example)”")
-                    .font(.system(size: 17, weight: .regular, design: .serif))
-                    .italic()
-                    .foregroundStyle(VerbsyDesign.muted)
-                    .lineSpacing(3)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.top, 18)
-                    .transition(.opacity)
-
-                Text("Swipe up for the next word")
-                    .font(.system(size: 13, weight: .semibold, design: .default))
-                    .foregroundStyle(VerbsyDesign.muted)
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .padding(.top, 14)
+            FeedActionRail(word: item.word, isFavorite: isFavorite) {
+                progress.toggleFavorite(item.word)
             }
-
-            Spacer(minLength: 0)
         }
-        .padding(.horizontal, VerbsyDesign.pageGutter)
-        .padding(.top, 80)
-        .padding(.bottom, 110)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(VerbsyDesign.background)
     }
 
@@ -368,6 +392,40 @@ private struct QuizCardView: View {
         }
         progress.recordQuiz(word: item.word, correct: isCorrect)
         isCorrect ? Haptics.success() : Haptics.warning()
+    }
+}
+
+private struct FeedActionRail: View {
+    let word: VerbsyWord
+    let isFavorite: Bool
+    let toggleFavorite: () -> Void
+
+    var body: some View {
+        VStack(spacing: 16) {
+            Button {
+                Haptics.selection()
+                toggleFavorite()
+            } label: {
+                Image(systemName: isFavorite ? "heart.fill" : "heart")
+                    .font(.system(size: 22, weight: .semibold))
+                    .foregroundStyle(isFavorite ? VerbsyDesign.onSage : VerbsyDesign.ink)
+                    .frame(width: 54, height: 54)
+                    .background {
+                        Circle().fill(.ultraThinMaterial)
+                        Circle().fill(isFavorite ? VerbsyDesign.sage.opacity(0.82) : VerbsyDesign.surface.opacity(0.46))
+                    }
+                    .clipShape(Circle())
+                    .overlay(Circle().stroke(Color.white.opacity(0.58)))
+                    .shadow(color: VerbsyDesign.ink.opacity(0.10), radius: 18, y: 8)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(isFavorite ? "Remove favorite" : "Add favorite")
+
+            WordShareButton(word: word, backgroundOpacity: 0.46, usesMaterialBackground: true)
+                .shadow(color: VerbsyDesign.ink.opacity(0.10), radius: 18, y: 8)
+        }
+        .padding(.trailing, VerbsyDesign.pageGutter)
+        .padding(.bottom, 110)
     }
 }
 

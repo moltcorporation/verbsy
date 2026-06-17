@@ -51,7 +51,7 @@
          </BuildableReference>
       </BuildableProductRunnable>
       <StoreKitConfigurationFileReference
-         identifier = "../Verbsy.storekit">
+         identifier = "verbsy/Verbsy.storekit">
       </StoreKitConfigurationFileReference>
    </LaunchAction>
    <ProfileAction

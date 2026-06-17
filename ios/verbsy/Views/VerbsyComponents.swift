@@ -170,11 +170,13 @@ struct WordShareCard: View {
 struct WordShareButton: View {
     let word: VerbsyWord
     var compact = false
+    var backgroundOpacity = 1.0
+    var usesMaterialBackground = false
 
     @State private var showShareSheet = false
 
     private var shareText: String {
-        "\(word.word) — \(word.shortDefinition)\n\nA sharper word from Verbsy. https://verbsy.app"
+        "\(word.word) — \(word.shortDefinition)\n\nLearn one new word every day with Verbsy. https://verbsy.app"
     }
 
     var body: some View {
@@ -196,9 +198,16 @@ struct WordShareButton: View {
             .font(.system(size: compact ? 18 : 22, weight: .semibold))
             .foregroundStyle(VerbsyDesign.ink)
             .frame(width: compact ? 44 : 54, height: compact ? 44 : 54)
-            .background(VerbsyDesign.surface)
+            .background {
+                if usesMaterialBackground {
+                    Circle().fill(.ultraThinMaterial)
+                    Circle().fill(VerbsyDesign.surface.opacity(backgroundOpacity))
+                } else {
+                    Circle().fill(VerbsyDesign.surface.opacity(backgroundOpacity))
+                }
+            }
             .clipShape(Circle())
-            .overlay(Circle().stroke(VerbsyDesign.line))
+            .overlay(Circle().stroke(usesMaterialBackground ? Color.white.opacity(0.58) : VerbsyDesign.line))
     }
 
     @MainActor private func shareItems() -> [Any] {

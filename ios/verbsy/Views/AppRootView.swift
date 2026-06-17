@@ -12,13 +12,19 @@ struct AppRootView: View {
     @State private var isShowingSplash = true
     @State private var selectedTab = 0
     @State private var showPaywall = false
+    @State private var requestedLearnMode: LearnMode?
+    @State private var requestedLearnWordSlug: String?
+    @State private var requestedProfileRoute: ProfileRoute?
 
     var body: some View {
         ZStack {
             if hasCompletedOnboarding {
                 MainAppView(
                     selectedTab: $selectedTab,
-                    showPaywall: $showPaywall
+                    showPaywall: $showPaywall,
+                    requestedLearnMode: $requestedLearnMode,
+                    requestedLearnWordSlug: $requestedLearnWordSlug,
+                    requestedProfileRoute: $requestedProfileRoute
                 )
                 .environmentObject(content)
                 .environmentObject(purchases)
@@ -58,12 +64,35 @@ struct AppRootView: View {
             switch url.host {
             case "paywall":
                 showPaywall = true
+            case "quiz":
+                selectedTab = 1
+                requestedLearnMode = .quiz
             case "today", "learn":
                 selectedTab = 1
+                requestedLearnMode = .words
+            case "word":
+                selectedTab = 1
+                requestedLearnMode = .words
+                requestedLearnWordSlug = url.pathComponents.dropFirst().first
             case "profile", "you":
                 selectedTab = 2
             case "home":
                 selectedTab = 0
+            case "favorites":
+                selectedTab = 2
+                requestedProfileRoute = .favorites
+            case "topics":
+                selectedTab = 2
+                requestedProfileRoute = .topics
+            case "difficulty":
+                selectedTab = 2
+                requestedProfileRoute = .difficulty
+            case "widgets":
+                selectedTab = 2
+                requestedProfileRoute = .widgets
+            case "notifications":
+                selectedTab = 2
+                requestedProfileRoute = .notifications
             default:
                 break
             }
@@ -122,7 +151,7 @@ private struct LaunchSplashView: View {
                     Text("Verbsy")
                         .font(VerbsyDesign.display(40))
                         .foregroundStyle(VerbsyDesign.ink)
-                    Text("A sharper word for every day.")
+                    Text("One new word every day.")
                         .font(.system(size: 17, weight: .medium, design: .default))
                         .foregroundStyle(VerbsyDesign.muted)
                 }
@@ -181,9 +210,10 @@ struct VerbsyLogo: View {
         ZStack {
             RoundedRectangle(cornerRadius: size * 0.26, style: .continuous)
                 .fill(VerbsyDesign.ink)
-            Image(systemName: "text.book.closed.fill")
-                .font(.system(size: size * 0.45, weight: .black))
+            Text("V")
+                .font(.system(size: size * 0.68, weight: .bold, design: .serif))
                 .foregroundStyle(.white)
+                .offset(y: -size * 0.02)
             Circle()
                 .fill(VerbsyDesign.gold)
                 .frame(width: size * 0.16, height: size * 0.16)

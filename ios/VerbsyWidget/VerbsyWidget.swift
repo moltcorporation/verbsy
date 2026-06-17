@@ -3,6 +3,7 @@ import SwiftUI
 import WidgetKit
 
 private struct WidgetWord: Codable {
+    let slug: String?
     let word: String
     let pronunciation: String
     let partOfSpeech: String
@@ -17,6 +18,16 @@ private struct VerbsyEntry: TimelineEntry {
     let theme: VerbsyWidgetTheme
 }
 
+private enum VerbsyWidgetPresentation: Equatable {
+    case standard
+    case homeDefinition
+    case homeQuote
+    case homeMinimal
+    case lockDefinition
+    case lockWord
+    case lockExample
+}
+
 enum VerbsyWidgetTheme: String, AppEnum {
     case paper
     case sage
@@ -24,6 +35,8 @@ enum VerbsyWidgetTheme: String, AppEnum {
     case mist
     case clear
     case graphite
+    case gold
+    case library
 
     static var typeDisplayRepresentation = TypeDisplayRepresentation(name: "Style")
     static var caseDisplayRepresentations: [VerbsyWidgetTheme: DisplayRepresentation] = [
@@ -32,7 +45,9 @@ enum VerbsyWidgetTheme: String, AppEnum {
         .ink: "Ink",
         .mist: "Mist",
         .clear: "Clear",
-        .graphite: "Graphite"
+        .graphite: "Graphite",
+        .gold: "Warm Gold",
+        .library: "Library"
     ]
 }
 
@@ -128,6 +143,7 @@ private struct VerbsyProvider: AppIntentTimelineProvider {
 
 private extension WidgetWord {
     static let sample = WidgetWord(
+        slug: "lucid",
         word: "Lucid",
         pronunciation: "LOO-sid",
         partOfSpeech: "adjective",
@@ -139,6 +155,7 @@ private extension WidgetWord {
 private struct VerbsyWidgetView: View {
     @Environment(\.widgetFamily) private var family
     let entry: VerbsyEntry
+    var presentation: VerbsyWidgetPresentation = .standard
 
     var body: some View {
         // Every widget shows a real word. Tapping opens the app for subscribers,
@@ -148,7 +165,7 @@ private struct VerbsyWidgetView: View {
             .containerBackground(for: .widget) {
                 palette.background
             }
-            .widgetURL(URL(string: entry.isPro ? "verbsy://today" : "verbsy://paywall"))
+            .widgetURL(widgetURL)
     }
 
     @ViewBuilder
@@ -170,102 +187,226 @@ private struct VerbsyWidgetView: View {
     }
 
     private var smallView: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            compactHeader
-            Spacer(minLength: 4)
-            wordText(size: 26)
-            metaText(size: 11)
-            definitionText(size: 13, lines: 4)
+        Group {
+            switch presentation {
+            case .homeMinimal:
+                VStack(alignment: .leading, spacing: 6) {
+                    Spacer(minLength: 0)
+                    wordText(size: 31)
+                    metaText(size: 11)
+                    Spacer(minLength: 0)
+                    Text("Verbsy")
+                        .font(.system(size: 11, weight: .black, design: .default))
+                        .foregroundStyle(palette.accent)
+                }
+            case .homeQuote:
+                VStack(alignment: .leading, spacing: 8) {
+                    compactHeader
+                    Spacer(minLength: 0)
+                    wordText(size: 23)
+                    exampleText(size: 13, lines: 5)
+                }
+            case .homeDefinition:
+                VStack(alignment: .leading, spacing: 7) {
+                    compactHeader
+                    Spacer(minLength: 0)
+                    wordText(size: 25)
+                    definitionText(size: 14, lines: 5)
+                }
+            default:
+                VStack(alignment: .leading, spacing: 6) {
+                    compactHeader
+                    Spacer(minLength: 4)
+                    wordText(size: 26)
+                    metaText(size: 11)
+                    definitionText(size: 13, lines: 4)
+                }
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .padding(contentPadding)
     }
 
     private var mediumView: some View {
-        HStack(alignment: .top, spacing: 14) {
-            VStack(alignment: .leading, spacing: 7) {
-                compactHeader
-                Spacer(minLength: 4)
-                wordText(size: 34)
-                metaText(size: 12)
-            }
-            .frame(maxWidth: 132, maxHeight: .infinity, alignment: .topLeading)
+        Group {
+            switch presentation {
+            case .homeMinimal:
+                HStack(alignment: .center, spacing: 14) {
+                    wordText(size: 38)
+                        .frame(maxWidth: 142, alignment: .leading)
+                    VStack(alignment: .leading, spacing: 7) {
+                        metaText(size: 12)
+                        definitionText(size: 14, lines: 3)
+                    }
+                }
+            case .homeQuote:
+                HStack(alignment: .top, spacing: 14) {
+                    VStack(alignment: .leading, spacing: 7) {
+                        compactHeader
+                        Spacer(minLength: 0)
+                        wordText(size: 31)
+                        metaText(size: 12)
+                    }
+                    .frame(maxWidth: 126, maxHeight: .infinity, alignment: .topLeading)
 
-            VStack(alignment: .leading, spacing: 8) {
-                definitionText(size: 16, lines: 3)
-                Divider().overlay(palette.secondary.opacity(0.28))
-                Text(entry.word.example)
-                    .font(.system(size: 13, weight: .semibold, design: .default))
-                    .foregroundStyle(palette.secondary)
-                    .lineLimit(3)
-                    .minimumScaleFactor(0.8)
+                    VStack(alignment: .leading, spacing: 7) {
+                        Text("Used in context")
+                            .font(.system(size: 11, weight: .black, design: .default))
+                            .foregroundStyle(palette.accent)
+                        exampleText(size: 15, lines: 5)
+                    }
+                }
+            case .homeDefinition:
+                HStack(alignment: .top, spacing: 14) {
+                    VStack(alignment: .leading, spacing: 7) {
+                        compactHeader
+                        Spacer(minLength: 0)
+                        wordText(size: 32)
+                        metaText(size: 12)
+                    }
+                    .frame(maxWidth: 128, maxHeight: .infinity, alignment: .topLeading)
+
+                    definitionText(size: 17, lines: 5)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                }
+            default:
+                HStack(alignment: .top, spacing: 14) {
+                    VStack(alignment: .leading, spacing: 7) {
+                        compactHeader
+                        Spacer(minLength: 4)
+                        wordText(size: 34)
+                        metaText(size: 12)
+                    }
+                    .frame(maxWidth: 132, maxHeight: .infinity, alignment: .topLeading)
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        definitionText(size: 16, lines: 3)
+                        Divider().overlay(palette.secondary.opacity(0.28))
+                        exampleText(size: 13, lines: 3)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                }
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
         }
         .padding(contentPadding)
     }
 
     private var largeView: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            compactHeader
-            Spacer(minLength: 6)
-            wordText(size: 42)
-            metaText(size: 13)
-            definitionText(size: 19, lines: 4)
-            Spacer(minLength: 4)
-            Text(entry.word.example)
-                .font(.system(size: 15, weight: .semibold, design: .default))
-                .foregroundStyle(palette.secondary)
-                .lineLimit(4)
-                .minimumScaleFactor(0.78)
-                .padding(.top, 4)
+        Group {
+            switch presentation {
+            case .homeMinimal:
+                VStack(alignment: .leading, spacing: 12) {
+                    compactHeader
+                    Spacer(minLength: 0)
+                    wordText(size: 48)
+                    metaText(size: 14)
+                    definitionText(size: 20, lines: 4)
+                    Spacer(minLength: 0)
+                }
+            case .homeQuote:
+                VStack(alignment: .leading, spacing: 12) {
+                    compactHeader
+                    Spacer(minLength: 0)
+                    wordText(size: 38)
+                    metaText(size: 13)
+                    Divider().overlay(palette.secondary.opacity(0.28))
+                    exampleText(size: 21, lines: 6)
+                    Spacer(minLength: 0)
+                }
+            case .homeDefinition:
+                VStack(alignment: .leading, spacing: 12) {
+                    compactHeader
+                    Spacer(minLength: 0)
+                    wordText(size: 40)
+                    metaText(size: 13)
+                    definitionText(size: 22, lines: 5)
+                    Spacer(minLength: 0)
+                }
+            default:
+                VStack(alignment: .leading, spacing: 10) {
+                    compactHeader
+                    Spacer(minLength: 6)
+                    wordText(size: 42)
+                    metaText(size: 13)
+                    definitionText(size: 19, lines: 4)
+                    Spacer(minLength: 4)
+                    exampleText(size: 15, lines: 4)
+                        .padding(.top, 4)
+                }
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .padding(contentPadding)
     }
 
     private var rectangularView: some View {
-        HStack(alignment: .top, spacing: 7) {
-            if entry.theme != .clear {
-                Text(String(entry.word.word.prefix(1)))
-                    .font(.system(size: 15, weight: .black, design: .default))
-                    .foregroundStyle(palette.accent)
-                    .frame(width: 22, height: 22)
-                    .background(palette.accent.opacity(0.13))
-                    .clipShape(Circle())
+        HStack(alignment: .center, spacing: 8) {
+            VStack(alignment: .leading, spacing: 1) {
+                HStack(spacing: 5) {
+                    Text(entry.word.word)
+                        .font(.system(size: 16.5, weight: .bold, design: .serif))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.56)
+                        .allowsTightening(true)
+
+                    Text(entry.word.partOfSpeech.uppercased())
+                        .font(.system(size: 7.8, weight: .black, design: .default))
+                        .foregroundStyle(palette.accent)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.72)
+                }
+
+                if presentation == .lockWord {
+                    Text(entry.word.pronunciation)
+                        .font(.system(size: 10.4, weight: .bold, design: .default))
+                        .foregroundStyle(palette.secondary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.75)
+                } else if presentation == .lockExample {
+                    Text(entry.word.example)
+                        .font(.system(size: 10.2, weight: .semibold, design: .default))
+                        .foregroundStyle(palette.secondary)
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.72)
+                        .allowsTightening(true)
+                } else {
+                    Text(entry.word.shortDefinition)
+                        .font(.system(size: 10.7, weight: .semibold, design: .default))
+                        .foregroundStyle(palette.secondary)
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.72)
+                        .allowsTightening(true)
+                }
             }
 
-            VStack(alignment: .leading, spacing: 1) {
-                Text(entry.word.word)
-                    .font(.system(size: 17, weight: .bold, design: .serif))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.56)
-                    .allowsTightening(true)
-                Text(entry.word.shortDefinition)
-                    .font(.system(size: 10.8, weight: .semibold, design: .default))
-                    .foregroundStyle(palette.secondary)
-                    .lineLimit(2)
-                    .minimumScaleFactor(0.72)
-                    .allowsTightening(true)
+            if presentation == .standard, entry.theme != .clear {
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 10, weight: .black))
+                    .foregroundStyle(palette.accent.opacity(0.72))
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
     }
 
     private var circularView: some View {
-        VStack(spacing: 0) {
-            Text(String(entry.word.word.prefix(1)))
-                .font(.system(size: 28, weight: .bold, design: .serif))
-                .minimumScaleFactor(0.7)
-            Text(entry.word.partOfSpeech.prefix(4))
-                .font(.system(size: 7.5, weight: .black, design: .default))
+        VStack(spacing: 1) {
+            Text(compactLockWord)
+                .font(.system(size: compactLockWord.count <= 5 ? 17 : 15, weight: .bold, design: .serif))
+                .lineLimit(1)
+                .minimumScaleFactor(0.52)
+                .allowsTightening(true)
+
+            Text(entry.word.partOfSpeech.prefix(4).uppercased())
+                .font(.system(size: 7.2, weight: .black, design: .default))
                 .foregroundStyle(palette.secondary)
                 .minimumScaleFactor(0.7)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var inlineView: some View {
-        Text("\(entry.word.word): \(entry.word.shortDefinition)")
+        let detail = presentation == .lockExample ? entry.word.example : entry.word.shortDefinition
+        return Text("\(entry.word.word): \(detail)")
             .font(.system(size: 13, weight: .semibold, design: .default))
             .lineLimit(1)
             .minimumScaleFactor(0.7)
@@ -308,6 +449,16 @@ private struct VerbsyWidgetView: View {
             .allowsTightening(true)
     }
 
+    private func exampleText(size: CGFloat, lines: Int) -> some View {
+        Text("\"\(entry.word.example)\"")
+            .font(.system(size: size, weight: .semibold, design: .serif))
+            .italic()
+            .foregroundStyle(palette.secondary)
+            .lineLimit(lines)
+            .minimumScaleFactor(0.74)
+            .allowsTightening(true)
+    }
+
     private var contentPadding: CGFloat {
         switch family {
         case .systemMedium, .systemLarge:
@@ -323,6 +474,17 @@ private struct VerbsyWidgetView: View {
 
     private var palette: VerbsyWidgetPalette {
         VerbsyWidgetPalette(theme: entry.theme)
+    }
+
+    private var widgetURL: URL? {
+        guard let slug = entry.word.slug else { return URL(string: "verbsy://today") }
+        return URL(string: "verbsy://word/\(slug)")
+    }
+
+    private var compactLockWord: String {
+        let word = entry.word.word
+        if word.count <= 7 { return word }
+        return String(word.prefix(6)) + "..."
     }
 }
 
@@ -365,6 +527,16 @@ private struct VerbsyWidgetPalette {
             primary = Color(red: 0.98, green: 0.98, blue: 0.96)
             secondary = Color(red: 0.82, green: 0.82, blue: 0.80)
             accent = Color(red: 0.72, green: 0.75, blue: 0.70)
+        case .gold:
+            background = Color(red: 0.953, green: 0.914, blue: 0.831) // #F3E9D4
+            primary = Color(red: 0.102, green: 0.098, blue: 0.086)
+            secondary = Color(red: 0.420, green: 0.340, blue: 0.230)
+            accent = Color(red: 0.745, green: 0.541, blue: 0.239)     // #BE8A3D
+        case .library:
+            background = Color(red: 0.115, green: 0.150, blue: 0.120)
+            primary = Color(red: 0.953, green: 0.945, blue: 0.914)
+            secondary = Color(red: 0.720, green: 0.745, blue: 0.675)
+            accent = Color(red: 0.498, green: 0.722, blue: 0.612)
         }
     }
 }
@@ -373,6 +545,12 @@ private struct VerbsyWidgetPalette {
 struct VerbsyWidgetBundle: WidgetBundle {
     var body: some Widget {
         VerbsyDailyWidget()
+        VerbsyDefinitionWidget()
+        VerbsyExampleWidget()
+        VerbsyMinimalWidget()
+        VerbsyLockDefinitionWidget()
+        VerbsyLockWordWidget()
+        VerbsyLockExampleWidget()
     }
 }
 
@@ -386,6 +564,90 @@ struct VerbsyDailyWidget: Widget {
         .configurationDisplayName("Word of the Day")
         .description("Keep one sharp word on your Home Screen or Lock Screen.")
         .supportedFamilies([.systemSmall, .systemMedium, .systemLarge, .accessoryRectangular, .accessoryCircular, .accessoryInline])
+        .contentMarginsDisabled()
+    }
+}
+
+struct VerbsyDefinitionWidget: Widget {
+    let kind = "VerbsyDefinitionWidget"
+
+    var body: some WidgetConfiguration {
+        AppIntentConfiguration(kind: kind, intent: VerbsyWidgetIntent.self, provider: VerbsyProvider()) { entry in
+            VerbsyWidgetView(entry: entry, presentation: .homeDefinition)
+        }
+        .configurationDisplayName("Definition Focus")
+        .description("A Home Screen widget built around the word's meaning.")
+        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
+        .contentMarginsDisabled()
+    }
+}
+
+struct VerbsyExampleWidget: Widget {
+    let kind = "VerbsyExampleWidget"
+
+    var body: some WidgetConfiguration {
+        AppIntentConfiguration(kind: kind, intent: VerbsyWidgetIntent.self, provider: VerbsyProvider()) { entry in
+            VerbsyWidgetView(entry: entry, presentation: .homeQuote)
+        }
+        .configurationDisplayName("Example in Context")
+        .description("A Home Screen widget that shows how the word is used.")
+        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
+        .contentMarginsDisabled()
+    }
+}
+
+struct VerbsyMinimalWidget: Widget {
+    let kind = "VerbsyMinimalWidget"
+
+    var body: some WidgetConfiguration {
+        AppIntentConfiguration(kind: kind, intent: VerbsyWidgetIntent.self, provider: VerbsyProvider()) { entry in
+            VerbsyWidgetView(entry: entry, presentation: .homeMinimal)
+        }
+        .configurationDisplayName("Minimal Word")
+        .description("A quieter Home Screen widget with a clean word-first layout.")
+        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
+        .contentMarginsDisabled()
+    }
+}
+
+struct VerbsyLockDefinitionWidget: Widget {
+    let kind = "VerbsyLockDefinitionWidget"
+
+    var body: some WidgetConfiguration {
+        AppIntentConfiguration(kind: kind, intent: VerbsyWidgetIntent.self, provider: VerbsyProvider()) { entry in
+            VerbsyWidgetView(entry: entry, presentation: .lockDefinition)
+        }
+        .configurationDisplayName("Word + Definition")
+        .description("A useful Lock Screen word with a short definition.")
+        .supportedFamilies([.accessoryRectangular, .accessoryInline])
+        .contentMarginsDisabled()
+    }
+}
+
+struct VerbsyLockWordWidget: Widget {
+    let kind = "VerbsyLockWordWidget"
+
+    var body: some WidgetConfiguration {
+        AppIntentConfiguration(kind: kind, intent: VerbsyWidgetIntent.self, provider: VerbsyProvider()) { entry in
+            VerbsyWidgetView(entry: entry, presentation: .lockWord)
+        }
+        .configurationDisplayName("Word Glance")
+        .description("A compact Lock Screen word that stays readable at a glance.")
+        .supportedFamilies([.accessoryCircular, .accessoryRectangular])
+        .contentMarginsDisabled()
+    }
+}
+
+struct VerbsyLockExampleWidget: Widget {
+    let kind = "VerbsyLockExampleWidget"
+
+    var body: some WidgetConfiguration {
+        AppIntentConfiguration(kind: kind, intent: VerbsyWidgetIntent.self, provider: VerbsyProvider()) { entry in
+            VerbsyWidgetView(entry: entry, presentation: .lockExample)
+        }
+        .configurationDisplayName("Word in Context")
+        .description("A Lock Screen widget with a short usage example.")
+        .supportedFamilies([.accessoryRectangular, .accessoryInline])
         .contentMarginsDisabled()
     }
 }

@@ -11,10 +11,10 @@ export default function PrivacyPage() {
           notification preferences are stored locally on your device.
         </p>
         <p>
-          The app contacts the Verbsy API to download vocabulary content such as
-          the daily word and word library. Standard server logs may include
-          technical information such as request time, route, IP address, and
-          user agent for security, reliability, and abuse prevention.
+          The iOS app ships its vocabulary content on device and does not
+          require a Verbsy account. The Verbsy website may use basic server logs
+          and first-party analytics to understand page visits, reliability, and
+          abuse prevention.
         </p>
         <p>
           Purchases are handled by Apple through StoreKit. Verbsy checks your
@@ -23,9 +23,9 @@ export default function PrivacyPage() {
         </p>
         <p>
           Verbsy does not sell personal information and does not use third-party
-          advertising SDKs. If analytics or crash reporting are added later, this
-          policy and the App Store privacy disclosures will be updated before
-          release.
+          advertising SDKs in the iOS app. If app analytics or crash reporting
+          are added later, this policy and the App Store privacy disclosures will
+          be updated before release.
         </p>
         <p>
           You can revoke notification permission in iOS Settings. You can delete

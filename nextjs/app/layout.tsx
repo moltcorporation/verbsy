@@ -3,22 +3,22 @@ import Script from "next/script";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Verbsy — A sharper word for every day",
+  title: "Verbsy — One new word every day",
   description:
-    "Verbsy helps you build a sharper vocabulary with one powerful daily word, clean review, reminders, and premium widgets.",
+    "Verbsy helps you learn one new word every day with iPhone widgets, daily notifications, quick quizzes, and a clean word feed.",
   openGraph: {
-    title: "Verbsy — A sharper word for every day",
+    title: "Verbsy — One new word every day",
     description:
-      "Build a sharper vocabulary with one powerful daily word.",
+      "Learn one new word every day with iPhone widgets, daily notifications, and quick quizzes.",
     url: "https://verbsy.app",
     siteName: "Verbsy",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Verbsy — A sharper word for every day",
+    title: "Verbsy — One new word every day",
     description:
-      "Build a sharper vocabulary with one powerful daily word.",
+      "Learn one new word every day with iPhone widgets, daily notifications, and quick quizzes.",
   },
 };
 

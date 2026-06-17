@@ -27,7 +27,7 @@ struct StorePaywallView: View {
                         .foregroundStyle(VerbsyDesign.ink)
                         .multilineTextAlignment(.center)
 
-                    Text("Keep a sharper word on your Home Screen and arrive every morning. Free for 3 days.")
+                    Text("Add daily words to your Home Screen and Lock Screen. Free for 3 days.")
                         .font(.system(size: 17, weight: .medium, design: .default))
                         .foregroundStyle(VerbsyDesign.muted)
                         .multilineTextAlignment(.center)

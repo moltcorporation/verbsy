@@ -1,5 +1,0 @@
-# Defaults for `fastlane deliver`. The Fastfile lane passes the API key + flags.
-app_identifier "com.moltcorporation.verbsy"
-skip_binary_upload true
-submit_for_review false
-overwrite_screenshots true

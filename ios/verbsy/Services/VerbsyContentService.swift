@@ -105,6 +105,21 @@ final class VerbsyContentStore: ObservableObject {
         return slugs.compactMap { map[$0] }.sorted { $0.word < $1.word }
     }
 
+    /// Ensure a specific word exists in the Learn feed and return its card id so
+    /// a deep link can scroll directly to it.
+    func focusWord(slug: String) -> Int? {
+        if let existing = feedItems.first(where: { $0.word.slug == slug }) {
+            return existing.id
+        }
+        guard let word = VerbsyCatalog.words.first(where: { $0.slug == slug }) else {
+            return nil
+        }
+        let focusedItem = FeedItem(id: feedCounter, word: word)
+        feedCounter += 1
+        feedItems.insert(focusedItem, at: 0)
+        return focusedItem.id
+    }
+
     // MARK: Paging
 
     /// Returns the next page from a deterministically shuffled pass of the

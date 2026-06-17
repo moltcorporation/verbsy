@@ -5,6 +5,7 @@ struct HomeView: View {
     @EnvironmentObject private var purchases: PurchaseManager
 
     @Binding var showPaywall: Bool
+    @Binding var requestedRoute: ProfileRoute?
     var openLearn: () -> Void
 
     @State private var path: [ProfileRoute] = []
@@ -80,6 +81,11 @@ struct HomeView: View {
             .background(VerbsyDesign.background.ignoresSafeArea())
             .navigationDestination(for: ProfileRoute.self) { destination in
                 ProfileDestinationView(route: destination, showPaywall: $showPaywall)
+            }
+            .onChange(of: requestedRoute) { _, route in
+                guard let route else { return }
+                path = [route]
+                requestedRoute = nil
             }
         }
     }

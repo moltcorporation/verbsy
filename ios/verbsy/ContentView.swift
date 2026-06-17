@@ -25,7 +25,7 @@ private struct SplashView: View {
                         .font(VerbsyDesign.display(40))
                         .foregroundStyle(AppStyle.ink)
 
-                    Text("A sharper word for every day.")
+                    Text("One new word every day.")
                         .font(.system(size: 17, weight: .medium, design: .default))
                         .foregroundStyle(AppStyle.muted)
                 }
@@ -51,7 +51,7 @@ struct OnboardingView: View {
     @State private var isGenerating = false
     @State private var navigationDirection = NavigationDirection.forward
 
-    private let totalSteps = 16
+    private let totalSteps = 15
 
     var body: some View {
         ZStack {
@@ -89,7 +89,7 @@ struct OnboardingView: View {
                     .init(title: "Sound more articulate", subtitle: "Use precise words naturally", symbol: "quote.bubble.fill"),
                     .init(title: "Write with more range", subtitle: "Find stronger words faster", symbol: "pencil.and.outline"),
                     .init(title: "Explain feelings clearly", subtitle: "Build emotional vocabulary", symbol: "heart.text.square.fill"),
-                    .init(title: "Think and speak sharper", subtitle: "Daily language for better ideas", symbol: "sparkles")
+                    .init(title: "Think and speak clearly", subtitle: "Daily language for better ideas", symbol: "sparkles")
                 ],
                 selection: $data.goal,
                 onContinue: next
@@ -180,23 +180,13 @@ struct OnboardingView: View {
                     .init(title: "Not yet", subtitle: "I will explore first", symbol: "bell.slash.fill")
                 ],
                 selection: $data.reminders,
-                onContinue: next
+                onContinue: continueFromReminderChoice
             )
         case 10:
-            NotificationPreviewScreen(onContinue: {
-                // Actually request permission here if they opted in. We only
-                // schedule once they're Pro / on trial (handled in AppRootView).
-                if data.reminders == "Yes" {
-                    Task { await NotificationScheduler.requestAuthorization(); next() }
-                } else {
-                    next()
-                }
-            })
-        case 11:
             WidgetPreviewScreen(onContinue: next)
-        case 12:
+        case 11:
             GeneratePlanIntro(onContinue: startGenerating)
-        case 13:
+        case 12:
             GeneratingPlanScreen(
                 goal: data.goal,
                 level: data.level,
@@ -204,9 +194,9 @@ struct OnboardingView: View {
                 isGenerating: $isGenerating,
                 onComplete: next
             )
-        case 14:
+        case 13:
             PlanRevealScreen(data: data, onContinue: next)
-        case 15:
+        case 14:
             SuccessPlanScreen(data: data, onContinue: next)
         default:
             StorePaywallView(
@@ -223,7 +213,7 @@ struct OnboardingView: View {
     }
 
     private var skipHandler: (() -> Void)? {
-        guard (1...11).contains(step) else { return nil }
+        guard (1...10).contains(step) else { return nil }
         return { next() }
     }
 
@@ -247,6 +237,23 @@ struct OnboardingView: View {
         Haptics.impact()
         isGenerating = true
         next()
+    }
+
+    private func continueFromReminderChoice() {
+        guard data.reminders == "Yes" else {
+            next()
+            return
+        }
+        Haptics.selection()
+        navigationDirection = .forward
+        Task {
+            await NotificationScheduler.requestAuthorization()
+            await MainActor.run {
+                withAnimation(onboardingStepAnimation) {
+                    step += 1
+                }
+            }
+        }
     }
 
     private var screenTransition: AnyTransition {
@@ -365,7 +372,7 @@ private struct WelcomeScreen: View {
                     .padding(.horizontal, 24)
 
                 VStack(spacing: 12) {
-                    Text("Build a sharper vocabulary")
+                    Text("Build a stronger vocabulary")
                         .font(VerbsyDesign.display(42))
                         .multilineTextAlignment(.center)
                         .foregroundStyle(AppStyle.ink)
@@ -558,65 +565,6 @@ private struct DailyLearningPreviewScreen: View {
     }
 }
 
-private struct NotificationPreviewScreen: View {
-    let onContinue: () -> Void
-
-    var body: some View {
-        VStack(spacing: 0) {
-            Spacer()
-
-            VStack(spacing: 28) {
-                VStack(alignment: .leading, spacing: 12) {
-                    HStack(spacing: 10) {
-                        VerbsyMark(size: 34)
-                        Text("VERBSY")
-                            .font(.system(size: 13, weight: .black, design: .default))
-                            .foregroundStyle(AppStyle.muted)
-                        Spacer()
-                        Text("now")
-                            .font(.system(size: 13, weight: .bold, design: .default))
-                            .foregroundStyle(AppStyle.muted)
-                    }
-
-                    Text("Your Verbsy word is ready")
-                        .font(.system(size: 20, weight: .black, design: .default))
-                        .foregroundStyle(AppStyle.ink)
-
-                    Text("Take one minute to add a sharper word to your day.")
-                        .font(.system(size: 17, weight: .medium, design: .default))
-                        .foregroundStyle(AppStyle.muted)
-                }
-                .padding(20)
-                .background(AppStyle.surface.opacity(0.94))
-                .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: 28, style: .continuous).stroke(AppStyle.line))
-                .shadow(color: .black.opacity(0.08), radius: 24, x: 0, y: 14)
-                .padding(.horizontal, 24)
-
-                VStack(spacing: 12) {
-                    Text("A gentle reminder, not a noisy app")
-                        .font(VerbsyDesign.display(36))
-                        .foregroundStyle(AppStyle.ink)
-                        .multilineTextAlignment(.center)
-                        .lineSpacing(-1)
-
-                    Text("Verbsy helps you protect the habit with one clean daily nudge.")
-                        .font(.system(size: 18, weight: .medium, design: .default))
-                        .foregroundStyle(AppStyle.muted)
-                        .multilineTextAlignment(.center)
-                        .lineSpacing(3)
-                        .padding(.horizontal, 32)
-                }
-            }
-
-            Spacer()
-        }
-        .safeAreaInset(edge: .bottom) {
-            PrimaryBottomButton(title: "Continue", action: onContinue)
-        }
-    }
-}
-
 private struct WidgetPreviewScreen: View {
     let onContinue: () -> Void
 
@@ -624,24 +572,25 @@ private struct WidgetPreviewScreen: View {
         VStack(spacing: 0) {
             Spacer(minLength: 16)
 
-            VStack(spacing: 26) {
-                HStack(alignment: .bottom, spacing: 12) {
-                    WidgetMockCard(size: 124, word: "Lucid", definition: "Clear, bright, and easy to understand.")
-                    VStack(spacing: 12) {
-                        WidgetMockCard(size: 78, word: "Aplomb", definition: "Grace under pressure.")
-                        LockScreenWidgetMock()
+            VStack(spacing: 24) {
+                VStack(spacing: 14) {
+                    HStack(spacing: 12) {
+                        WidgetMockCard(size: 112, word: "Lucid", definition: "Clear, bright, and easy to understand.")
+                        WidgetMockCard(size: 112, word: "Aplomb", definition: "Grace under pressure.")
                     }
+
+                    LockScreenWidgetMock()
                 }
                 .padding(.horizontal, 24)
 
                 VStack(spacing: 12) {
-                    Text("Put better words on your screen")
+                    Text("Home and Lock Screen widgets")
                         .font(VerbsyDesign.display(36))
                         .foregroundStyle(AppStyle.ink)
                         .multilineTextAlignment(.center)
                         .lineSpacing(-1)
 
-                    Text("Pro includes Home Screen and Lock Screen widgets for your word of the day.")
+                    Text("Keep your daily word visible with beautiful widgets you can style for your Home Screen or Lock Screen.")
                         .font(.system(size: 18, weight: .medium, design: .default))
                         .foregroundStyle(AppStyle.muted)
                         .multilineTextAlignment(.center)
@@ -709,7 +658,7 @@ private struct LockScreenWidgetMock: View {
         }
         .foregroundStyle(AppStyle.ink)
         .padding(.horizontal, 12)
-        .frame(width: 122, height: 54)
+        .frame(width: 252, height: 54, alignment: .leading)
         .background(AppStyle.surface)
         .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).stroke(AppStyle.line))
@@ -768,6 +717,7 @@ private struct GeneratingPlanScreen: View {
     let onComplete: () -> Void
 
     @State private var progress = 0.0
+    @State private var statusText = "Reading your preferences"
 
     var body: some View {
         VStack(spacing: 44) {
@@ -778,7 +728,7 @@ private struct GeneratingPlanScreen: View {
                     .font(VerbsyDesign.display(80))
                     .foregroundStyle(AppStyle.ink)
 
-                Text("We're setting everything up for you")
+                Text(statusText)
                     .font(VerbsyDesign.display(33))
                     .foregroundStyle(AppStyle.ink)
                     .multilineTextAlignment(.center)
@@ -807,19 +757,35 @@ private struct GeneratingPlanScreen: View {
             Spacer()
         }
         .onAppear {
-            progress = 0.17
-            withAnimation(.easeInOut(duration: 2.1)) {
-                progress = 1
-            }
-
             Task {
-                try? await Task.sleep(for: .seconds(2.35))
+                await runGenerationSequence()
                 if isGenerating {
                     isGenerating = false
                     Haptics.success()
                     onComplete()
                 }
             }
+        }
+    }
+
+    @MainActor
+    private func runGenerationSequence() async {
+        let stages: [(Double, String, UInt64)] = [
+            (0.12, "Reading your preferences", 220_000_000),
+            (0.27, "Calibrating your word level", 360_000_000),
+            (0.44, "Matching topics to your interests", 420_000_000),
+            (0.63, "Building daily practice prompts", 420_000_000),
+            (0.82, "Setting your review rhythm", 360_000_000),
+            (0.94, "Preparing your first word", 260_000_000),
+            (1.0, "Your plan is ready", 300_000_000)
+        ]
+
+        for stage in stages {
+            statusText = stage.1
+            withAnimation(.easeInOut(duration: 0.34)) {
+                progress = stage.0
+            }
+            try? await Task.sleep(nanoseconds: stage.2)
         }
     }
 }
@@ -847,7 +813,7 @@ private struct PlanRevealScreen: View {
                 WordPlanCard(word: data.recommendedWord)
 
                 VStack(spacing: 14) {
-                    PlanInfoRow(title: "Goal", value: data.goal.isEmpty ? "Build a sharper vocabulary" : data.goal, symbol: "target")
+                    PlanInfoRow(title: "Goal", value: data.goal.isEmpty ? "Build a stronger vocabulary" : data.goal, symbol: "target")
                     PlanInfoRow(title: "Daily pace", value: data.dailyTime.isEmpty ? "3 minutes" : data.dailyTime, symbol: "timer")
                     PlanInfoRow(title: "Focus", value: data.topics.isEmpty ? "Psychology, writing" : data.topics.sorted().prefix(3).joined(separator: ", "), symbol: "sparkles")
                 }
@@ -967,7 +933,7 @@ private struct PaywallScreen: View {
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: 24) {
-                Text("Start your 3-day FREE trial to continue")
+                Text("Try Verbsy Pro free")
                     .font(VerbsyDesign.display(38))
                     .foregroundStyle(AppStyle.ink)
                     .multilineTextAlignment(.center)
@@ -976,9 +942,9 @@ private struct PaywallScreen: View {
                     .padding(.horizontal, 8)
 
                 VStack(alignment: .leading, spacing: 24) {
-                    TimelineRow(symbol: "lock.open.fill", title: "Today", detail: "Unlock your full daily vocabulary plan, review loop, and advanced word collections.", isLast: false)
-                    TimelineRow(symbol: "bell.fill", title: "In 2 Days - Reminder", detail: "We will remind you before your trial would end once notifications are connected.", isLast: false)
-                    TimelineRow(symbol: "crown.fill", title: "In 3 Days - Billing Starts", detail: "Payment is not implemented yet. This screen is a visual placeholder for the future trial wall.", isLast: true)
+                    TimelineRow(symbol: "lock.open.fill", title: "Today", detail: "Unlock widgets, daily word reminders, and faster widget rotation.", isLast: false)
+                    TimelineRow(symbol: "bell.fill", title: "Day 2 - Reminder", detail: "We will remind you before your trial ends.", isLast: false)
+                    TimelineRow(symbol: "crown.fill", title: "Day 3 - Billing Starts", detail: "Your subscription begins unless you cancel before the trial ends.", isLast: true)
                 }
                 .padding(.horizontal, 8)
 
@@ -987,7 +953,7 @@ private struct PaywallScreen: View {
                     PlanOption(title: "Yearly", price: "$29.99", isSelected: true, badge: "3 DAYS FREE")
                 }
 
-                Label("No Payment Due Now", systemImage: "checkmark")
+                Label("No payment due during the trial", systemImage: "checkmark")
                     .font(.system(size: 25, weight: .black, design: .default))
                     .foregroundStyle(AppStyle.ink)
 
@@ -1003,11 +969,11 @@ private struct PaywallScreen: View {
                 .buttonStyle(.pressable)
 
                 VStack(spacing: 12) {
-                    Text("Already purchased?")
+                    Text("Restore purchases from the Pro screen.")
                         .font(.system(size: 18, weight: .medium, design: .default))
                         .foregroundStyle(AppStyle.muted)
 
-                    Text("3 days free, then $29.99 per year. Plan auto-renews unless canceled. StoreKit will be connected later.")
+                    Text("3 days free, then $29.99 per year. Plan auto-renews unless canceled at least 24 hours before renewal.")
                         .font(.system(size: 16, weight: .medium, design: .default))
                         .foregroundStyle(AppStyle.muted)
                         .multilineTextAlignment(.center)
@@ -1215,13 +1181,6 @@ private struct WordPlanCard: View {
                 }
 
                 Spacer()
-
-                Image(systemName: "speaker.wave.2.fill")
-                    .font(.system(size: 26, weight: .bold))
-                    .foregroundStyle(AppStyle.ink)
-                    .frame(width: 58, height: 58)
-                    .background(AppStyle.panel)
-                    .clipShape(Circle())
             }
 
             Text(word.pronunciation)
@@ -1404,10 +1363,6 @@ private struct PlanInfoRow: View {
             }
 
             Spacer()
-
-            Image(systemName: "pencil")
-                .font(.system(size: 18, weight: .bold))
-                .foregroundStyle(AppStyle.muted.opacity(0.55))
         }
         .padding(18)
         .background(AppStyle.surface)
