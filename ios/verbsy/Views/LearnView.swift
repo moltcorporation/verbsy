@@ -1,3 +1,4 @@
+import StoreKit
 import SwiftUI
 
 /// The core experience. A horizontal pager between an infinite word feed and an
@@ -37,7 +38,7 @@ struct LearnView: View {
             }
         }
         .onChange(of: prefs.selectedTopics) { _, _ in reloadForPreferences() }
-        .onChange(of: prefs.difficulties) { _, _ in reloadForPreferences() }
+        .onChange(of: prefs.difficultyLevel) { _, _ in reloadForPreferences() }
         .onChange(of: requestedMode) { _, requested in
             guard let requested else { return }
             withAnimation(.spring(response: 0.3, dampingFraction: 0.9)) {
@@ -103,6 +104,7 @@ private struct WordFeedView: View {
     @EnvironmentObject private var content: VerbsyContentStore
     @EnvironmentObject private var progress: LocalProgressStore
     @EnvironmentObject private var prefs: PreferencesStore
+    @Environment(\.requestReview) private var requestReview
 
     @Binding var requestedWordSlug: String?
     @State private var currentId: Int?
@@ -134,7 +136,9 @@ private struct WordFeedView: View {
                 .ignoresSafeArea()
                 .onChange(of: currentId) { _, id in
                     guard let id, let item = content.feedItems.first(where: { $0.id == id }) else { return }
-                    progress.recordSeen(item.word)
+                    if progress.recordSeen(item.word) {
+                        requestRatingIfEligible(after: .dailyGoalCompleted)
+                    }
                     loadMoreIfNeeded(currentId: id)
                 }
                 .onChange(of: requestedWordSlug) { _, slug in
@@ -143,7 +147,9 @@ private struct WordFeedView: View {
                 }
                 .onAppear {
                     if currentId == nil, let first = content.feedItems.first {
-                        progress.recordSeen(first.word)
+                        if progress.recordSeen(first.word) {
+                            requestRatingIfEligible(after: .dailyGoalCompleted)
+                        }
                     }
                     if let requestedWordSlug {
                         focusRequestedWord(requestedWordSlug)
@@ -169,14 +175,23 @@ private struct WordFeedView: View {
             currentId = id
         }
         if let item = content.feedItems.first(where: { $0.id == id }) {
-            progress.recordSeen(item.word)
+            if progress.recordSeen(item.word) {
+                requestRatingIfEligible(after: .dailyGoalCompleted)
+            }
         }
         requestedWordSlug = nil
+    }
+
+    private func requestRatingIfEligible(after event: RatingPromptEvent) {
+        RatingPromptCoordinator.requestIfEligible(after: event, progress: progress.progress) {
+            requestReview()
+        }
     }
 }
 
 private struct WordCardView: View {
     @EnvironmentObject private var progress: LocalProgressStore
+    @Environment(\.requestReview) private var requestReview
     let word: VerbsyWord
 
     private var isFavorite: Bool { progress.isFavorite(word) }
@@ -248,11 +263,21 @@ private struct WordCardView: View {
             .padding(.bottom, LearnFeedLayout.wordContentBottomPadding)
 
             FeedActionRail(word: word, isFavorite: isFavorite) {
+                let wasFavorite = progress.isFavorite(word)
                 progress.toggleFavorite(word)
+                if !wasFavorite {
+                    requestRatingIfEligible(after: .favoriteAdded)
+                }
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(VerbsyDesign.background)
+    }
+
+    private func requestRatingIfEligible(after event: RatingPromptEvent) {
+        RatingPromptCoordinator.requestIfEligible(after: event, progress: progress.progress) {
+            requestReview()
+        }
     }
 }
 
@@ -307,6 +332,7 @@ private struct QuizFeedView: View {
 
 private struct QuizCardView: View {
     @EnvironmentObject private var progress: LocalProgressStore
+    @Environment(\.requestReview) private var requestReview
     let item: QuizBatchItem
 
     @State private var selectedSlug: String?
@@ -370,7 +396,11 @@ private struct QuizCardView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
 
             FeedActionRail(word: item.word, isFavorite: isFavorite) {
+                let wasFavorite = progress.isFavorite(item.word)
                 progress.toggleFavorite(item.word)
+                if !wasFavorite {
+                    requestRatingIfEligible(after: .favoriteAdded)
+                }
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -391,7 +421,16 @@ private struct QuizCardView: View {
             selectedSlug = option.slug
         }
         progress.recordQuiz(word: item.word, correct: isCorrect)
+        if isCorrect {
+            requestRatingIfEligible(after: .quizCorrect)
+        }
         isCorrect ? Haptics.success() : Haptics.warning()
+    }
+
+    private func requestRatingIfEligible(after event: RatingPromptEvent) {
+        RatingPromptCoordinator.requestIfEligible(after: event, progress: progress.progress) {
+            requestReview()
+        }
     }
 }
 

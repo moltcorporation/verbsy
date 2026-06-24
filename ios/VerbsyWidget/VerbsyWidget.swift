@@ -52,25 +52,31 @@ enum VerbsyWidgetTheme: String, AppEnum {
 }
 
 enum VerbsyWidgetRotation: String, AppEnum {
+    case hourly
+    case twoHours
+    case threeHours
     case daily
     case twiceDaily
     case sixHours
-    case threeHours
 
     static var typeDisplayRepresentation = TypeDisplayRepresentation(name: "Change word")
     static var caseDisplayRepresentations: [VerbsyWidgetRotation: DisplayRepresentation] = [
-        .daily: "Once a day",
-        .twiceDaily: "Every 12 hours",
+        .hourly: "Every hour",
+        .twoHours: "Every 2 hours",
+        .threeHours: "Every 3 hours",
         .sixHours: "Every 6 hours",
-        .threeHours: "Every 3 hours"
+        .twiceDaily: "Every 12 hours",
+        .daily: "Once a day",
     ]
 
     var hours: Int {
         switch self {
-        case .daily: return 24
-        case .twiceDaily: return 12
-        case .sixHours: return 6
+        case .hourly: return 1
+        case .twoHours: return 2
         case .threeHours: return 3
+        case .sixHours: return 6
+        case .twiceDaily: return 12
+        case .daily: return 24
         }
     }
 }
@@ -82,7 +88,7 @@ struct VerbsyWidgetIntent: WidgetConfigurationIntent {
     @Parameter(title: "Style", default: .paper)
     var theme: VerbsyWidgetTheme
 
-    @Parameter(title: "Change word", default: .daily)
+    @Parameter(title: "Change word", default: .threeHours)
     var rotation: VerbsyWidgetRotation
 }
 
@@ -103,8 +109,6 @@ private struct VerbsyProvider: AppIntentTimelineProvider {
         let defaults = UserDefaults(suiteName: appGroup) ?? .standard
         let isPro = defaults.bool(forKey: "widget.isPro")
         let words = loadWords(defaults)
-        // The word widget works for everyone. Pro unlocks the chosen theme and a
-        // faster rotation; free widgets show a daily word in the default style.
         let theme = isPro ? configuration.theme : .paper
         let interval = isPro ? max(1, configuration.rotation.hours) : 24
         let calendar = Calendar.current
@@ -158,12 +162,20 @@ private struct VerbsyWidgetView: View {
     var presentation: VerbsyWidgetPresentation = .standard
 
     var body: some View {
-        // Every widget shows a real word. Tapping opens the app for subscribers,
-        // or the paywall for free users (who get a daily word in the default style).
-        content
-            .foregroundStyle(palette.primary)
+        Group {
+            if entry.isPro {
+                content
+            } else {
+                lockedContent
+            }
+        }
+            .foregroundStyle(isAccessoryFamily ? Color.primary : palette.primary)
             .containerBackground(for: .widget) {
-                palette.background
+                if isAccessoryFamily {
+                    Color.clear
+                } else {
+                    palette.background
+                }
             }
             .widgetURL(widgetURL)
     }
@@ -176,13 +188,78 @@ private struct VerbsyWidgetView: View {
         case .systemMedium:
             mediumView
         case .accessoryRectangular:
-            rectangularView
+            lockRectangularView
         case .accessoryCircular:
-            circularView
+            lockCircularView
         case .accessoryInline:
-            inlineView
+            lockInlineView
         default:
             smallView
+        }
+    }
+
+    @ViewBuilder
+    private var lockedContent: some View {
+        switch family {
+        case .accessoryInline:
+            Text("Verbsy Pro required")
+                .font(.system(size: 13.6, weight: .heavy, design: .default))
+                .foregroundStyle(.primary)
+                .lineLimit(1)
+        case .accessoryCircular:
+            VStack(spacing: 2) {
+                Image(systemName: "lock.fill")
+                    .font(.system(size: 15, weight: .heavy))
+                    .foregroundStyle(.primary)
+                Text("Pro")
+                    .font(.system(size: 9.5, weight: .black, design: .default))
+                    .foregroundStyle(.primary)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        case .accessoryRectangular:
+            HStack(spacing: 8) {
+                Image(systemName: "lock.fill")
+                    .font(.system(size: 14, weight: .heavy))
+                    .foregroundStyle(.primary)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("Verbsy Pro")
+                        .font(.system(size: 15.5, weight: .black, design: .default))
+                        .foregroundStyle(.primary)
+                    Text("Open Verbsy to unlock")
+                        .font(.system(size: 11.2, weight: .bold, design: .default))
+                        .foregroundStyle(.primary)
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+        default:
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text("Verbsy")
+                        .font(.system(size: 12, weight: .black, design: .default))
+                        .foregroundStyle(palette.secondary)
+                    Spacer()
+                    Image(systemName: "lock.fill")
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundStyle(palette.accent)
+                }
+
+                Spacer(minLength: 0)
+
+                Text("Verbsy Pro required")
+                    .font(.system(size: family == .systemLarge ? 32 : 22, weight: .bold, design: .serif))
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.68)
+
+                Text("Open Verbsy to unlock Home Screen and Lock Screen widgets.")
+                    .font(.system(size: family == .systemLarge ? 17 : 13, weight: .semibold, design: .default))
+                    .foregroundStyle(palette.secondary)
+                    .lineLimit(family == .systemLarge ? 3 : 2)
+                    .minimumScaleFactor(0.76)
+
+                Spacer(minLength: 0)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            .padding(contentPadding)
         }
     }
 
@@ -404,6 +481,81 @@ private struct VerbsyWidgetView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
+    private var lockRectangularView: some View {
+        HStack(alignment: .center, spacing: 8) {
+            VStack(alignment: .leading, spacing: presentation == .lockWord ? 2 : 1.5) {
+                HStack(alignment: .firstTextBaseline, spacing: 5.5) {
+                    Text(entry.word.word)
+                        .font(.system(size: presentation == .lockWord ? 19.4 : 18.2, weight: .bold, design: .serif))
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.56)
+                        .allowsTightening(true)
+
+                    if presentation != .lockWord {
+                        Text(entry.word.partOfSpeech.uppercased())
+                            .font(.system(size: 8.8, weight: .bold, design: .default))
+                            .foregroundStyle(.primary)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
+                    }
+                }
+
+                switch presentation {
+                case .lockWord:
+                    Text("\(entry.word.pronunciation) · \(entry.word.partOfSpeech)")
+                        .font(.system(size: 12, weight: .semibold, design: .default))
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.75)
+                case .lockExample:
+                    Text(entry.word.example)
+                        .font(.system(size: 11.8, weight: .semibold, design: .serif))
+                        .italic()
+                        .foregroundStyle(.primary)
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.72)
+                        .allowsTightening(true)
+                default:
+                    Text(entry.word.shortDefinition)
+                        .font(.system(size: 12.1, weight: .semibold, design: .default))
+                        .foregroundStyle(.primary)
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.72)
+                        .allowsTightening(true)
+                }
+            }
+            Spacer(minLength: 0)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+    }
+
+    private var lockCircularView: some View {
+        VStack(spacing: 1) {
+            Text(compactLockWord)
+                .font(.system(size: compactLockWord.count <= 5 ? 19.6 : 17.2, weight: .bold, design: .serif))
+                .foregroundStyle(.primary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.54)
+                .allowsTightening(true)
+
+            Text(entry.word.partOfSpeech.prefix(4).uppercased())
+                .font(.system(size: 8, weight: .bold, design: .default))
+                .foregroundStyle(.primary)
+                .minimumScaleFactor(0.76)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private var lockInlineView: some View {
+        let detail = presentation == .lockExample ? entry.word.example : entry.word.shortDefinition
+        return Text("\(entry.word.word): \(detail)")
+            .font(.system(size: 13.8, weight: .semibold, design: .default))
+            .foregroundStyle(.primary)
+            .lineLimit(1)
+            .minimumScaleFactor(0.72)
+    }
+
     private var inlineView: some View {
         let detail = presentation == .lockExample ? entry.word.example : entry.word.shortDefinition
         return Text("\(entry.word.word): \(detail)")
@@ -477,6 +629,7 @@ private struct VerbsyWidgetView: View {
     }
 
     private var widgetURL: URL? {
+        guard entry.isPro else { return URL(string: "verbsy://paywall") }
         guard let slug = entry.word.slug else { return URL(string: "verbsy://today") }
         return URL(string: "verbsy://word/\(slug)")
     }
@@ -485,6 +638,14 @@ private struct VerbsyWidgetView: View {
         let word = entry.word.word
         if word.count <= 7 { return word }
         return String(word.prefix(6)) + "..."
+    }
+
+    private var isLockPresentation: Bool {
+        presentation == .lockDefinition || presentation == .lockWord || presentation == .lockExample
+    }
+
+    private var isAccessoryFamily: Bool {
+        family == .accessoryRectangular || family == .accessoryCircular || family == .accessoryInline
     }
 }
 
@@ -633,7 +794,7 @@ struct VerbsyLockWordWidget: Widget {
         }
         .configurationDisplayName("Word Glance")
         .description("A compact Lock Screen word that stays readable at a glance.")
-        .supportedFamilies([.accessoryCircular, .accessoryRectangular])
+        .supportedFamilies([.accessoryCircular, .accessoryRectangular, .accessoryInline])
         .contentMarginsDisabled()
     }
 }

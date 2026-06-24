@@ -34,6 +34,7 @@ struct AppRootView: View {
             } else {
                 OnboardingView(
                     onCompleted: { wantsReminder, topics, level in
+                        MetaEventLogger.logCompletedOnboarding()
                         wantsReminders = wantsReminder
                         prefs.setTopics(topics)
                         prefs.applyLevel(level)
@@ -104,9 +105,9 @@ struct AppRootView: View {
             content.syncWidget(topics: prefs.selectedTopics, difficulties: prefs.effectiveDifficulties)
         }
         .onChange(of: prefs.selectedTopics) { _, _ in propagatePreferences() }
-        .onChange(of: prefs.difficulties) { _, _ in propagatePreferences() }
+        .onChange(of: prefs.difficultyLevel) { _, _ in propagatePreferences() }
         .task {
-            await content.refresh()
+            await content.refresh(topics: prefs.selectedTopics, difficulties: prefs.effectiveDifficulties)
             content.syncWidget(topics: prefs.selectedTopics, difficulties: prefs.effectiveDifficulties)
             // Notifications are one-shot; top up the schedule for Pro users on launch.
             if purchases.isPro && wantsReminders { scheduleReminders() }

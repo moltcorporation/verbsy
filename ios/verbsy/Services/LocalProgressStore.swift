@@ -29,13 +29,15 @@ final class LocalProgressStore: ObservableObject {
     // MARK: Learning activity (drives stats + streak)
 
     /// Call when a feed card becomes the active full-screen card.
-    func recordSeen(_ word: VerbsyWord) {
-        guard !progress.seenSlugs.contains(word.slug) else { return }
+    @discardableResult
+    func recordSeen(_ word: VerbsyWord) -> Bool {
+        guard !progress.seenSlugs.contains(word.slug) else { return false }
         let today = LocalProgress.key(for: Date())
         progress.seenSlugs.insert(word.slug)
         progress.seenByDate[today, default: 0] += 1
         refreshActive(for: today)
         save()
+        return true
     }
 
     func recordQuiz(word: VerbsyWord, correct: Bool) {

@@ -65,9 +65,16 @@ struct StorePaywallView: View {
 
 #if DEBUG
                 if purchases.products.isEmpty {
-                    Button("Reset local Pro unlock") { purchases.resetLocalTestingUnlock() }
-                        .font(.system(size: 13, weight: .semibold, design: .default))
-                        .foregroundStyle(VerbsyDesign.muted)
+                    HStack(spacing: 16) {
+                        Button("Unlock locally") {
+                            purchases.unlockForLocalTesting()
+                            onCompleted()
+                            dismiss()
+                        }
+                        Button("Reset local unlock") { purchases.resetLocalTestingUnlock() }
+                    }
+                    .font(.system(size: 13, weight: .semibold, design: .default))
+                    .foregroundStyle(VerbsyDesign.muted)
                 }
 #endif
 
@@ -113,12 +120,16 @@ struct StorePaywallView: View {
     private var planSelector: some View {
         VStack(spacing: 12) {
             if purchases.products.isEmpty {
-#if DEBUG
-                PlanRow(title: "Yearly", price: "$29.99 / year", subtitle: "Just $2.50 / month", badge: "Save 75%", isSelected: selectedProductId == "verbsy.pro.annual") { selectedProductId = "verbsy.pro.annual" }
-                PlanRow(title: "Monthly", price: "$9.99 / month", subtitle: nil, badge: nil, isSelected: selectedProductId == "verbsy.pro.monthly") { selectedProductId = "verbsy.pro.monthly" }
-#else
-                ProgressView().tint(VerbsyDesign.ink).frame(maxWidth: .infinity).padding(28)
-#endif
+                if purchases.isLoadingProducts {
+                    ProgressView()
+                        .tint(VerbsyDesign.ink)
+                        .frame(maxWidth: .infinity)
+                        .padding(28)
+                } else {
+                    PlansUnavailableView {
+                        Task { await purchases.loadProducts(force: true) }
+                    }
+                }
             } else {
                 ForEach(purchases.products, id: \.id) { product in
                     PlanRow(
@@ -137,13 +148,7 @@ struct StorePaywallView: View {
 
     private func startPurchase() {
         guard let product = purchases.products.first(where: { $0.id == selectedProductId }) else {
-#if DEBUG
-            purchases.unlockForLocalTesting()
-            onCompleted()
-            dismiss()
-#else
             purchases.statusMessage = "Plans are still loading. Try again in a moment."
-#endif
             return
         }
         Task {
@@ -161,20 +166,17 @@ struct StorePaywallView: View {
     }
 
     private var isPrimaryButtonDisabled: Bool {
-        purchases.isPurchasing || (purchases.products.isEmpty && !isDebugBuild)
+        purchases.isPurchasing || purchases.products.isEmpty
     }
 
     private var disclosure: String {
-        let price = selectedProductId == "verbsy.pro.monthly" ? "$9.99/month" : "$29.99/year"
+        let price: String
+        if let product = purchases.products.first(where: { $0.id == selectedProductId }) {
+            price = product.id == PurchaseManager.monthlyProductId ? "\(product.displayPrice)/month" : "\(product.displayPrice)/year"
+        } else {
+            price = selectedProductId == PurchaseManager.monthlyProductId ? "$9.99/month" : "$29.99/year"
+        }
         return "3 days free, then \(price). Cancel anytime in Settings, at least 24 hours before renewal. Auto-renews until canceled."
-    }
-
-    private var isDebugBuild: Bool {
-#if DEBUG
-        true
-#else
-        false
-#endif
     }
 
     private func title(for product: Product) -> String {
@@ -187,6 +189,47 @@ struct StorePaywallView: View {
 
     private func subtitle(for product: Product) -> String? {
         product.id.contains("annual") ? "Best value" : nil
+    }
+}
+
+private struct PlansUnavailableView: View {
+    let retry: () -> Void
+
+    var body: some View {
+        VStack(spacing: 14) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 22, weight: .bold))
+                .foregroundStyle(VerbsyDesign.gold)
+                .frame(width: 46, height: 46)
+                .background(VerbsyDesign.goldSoft)
+                .clipShape(Circle())
+
+            VStack(spacing: 4) {
+                Text("Plans are unavailable")
+                    .font(.system(size: 18, weight: .bold, design: .default))
+                    .foregroundStyle(VerbsyDesign.ink)
+                Text("Check your connection or try again in a moment.")
+                    .font(.system(size: 14, weight: .medium, design: .default))
+                    .foregroundStyle(VerbsyDesign.muted)
+                    .multilineTextAlignment(.center)
+            }
+
+            Button(action: retry) {
+                Text("Retry")
+                    .font(.system(size: 15, weight: .bold, design: .default))
+                    .foregroundStyle(VerbsyDesign.sage)
+                    .frame(minWidth: 104)
+                    .padding(.vertical, 12)
+                    .background(VerbsyDesign.sageSoft)
+                    .clipShape(Capsule())
+            }
+            .buttonStyle(.pressable)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(20)
+        .background(VerbsyDesign.surface)
+        .clipShape(RoundedRectangle(cornerRadius: VerbsyDesign.radiusCard, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: VerbsyDesign.radiusCard, style: .continuous).stroke(VerbsyDesign.line))
     }
 }
 

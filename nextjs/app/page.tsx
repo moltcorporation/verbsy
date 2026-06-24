@@ -46,7 +46,7 @@ export default function Home() {
               Preview the app
             </a>
           </div>
-          <p className="launch-note">iPhone only. App Store launch coming soon.</p>
+          <p className="launch-note">Available now for iPhone on the App Store.</p>
         </div>
 
         <div className="phone-stage" aria-label="Verbsy app preview">

@@ -51,7 +51,7 @@ struct OnboardingView: View {
     @State private var isGenerating = false
     @State private var navigationDirection = NavigationDirection.forward
 
-    private let totalSteps = 15
+    private let totalSteps = 13
 
     var body: some View {
         ZStack {
@@ -82,73 +82,75 @@ struct OnboardingView: View {
         case 0:
             WelcomeScreen(onContinue: next)
         case 1:
-            SingleChoiceQuestion(
+            MultiChoiceQuestion(
                 title: "What do you want Verbsy to help with?",
-                subtitle: "This helps us shape your daily word plan.",
                 options: [
-                    .init(title: "Sound more articulate", subtitle: "Use precise words naturally", symbol: "quote.bubble.fill"),
-                    .init(title: "Write with more range", subtitle: "Find stronger words faster", symbol: "pencil.and.outline"),
-                    .init(title: "Explain feelings clearly", subtitle: "Build emotional vocabulary", symbol: "heart.text.square.fill"),
-                    .init(title: "Think and speak clearly", subtitle: "Daily language for better ideas", symbol: "sparkles")
+                    .init(title: "Sound more articulate", symbol: "quote.bubble.fill"),
+                    .init(title: "Write with range", symbol: "pencil.and.outline"),
+                    .init(title: "Explain feelings", symbol: "heart.text.square.fill"),
+                    .init(title: "Think clearly", symbol: "sparkles")
                 ],
-                selection: $data.goal,
+                selections: $data.goals,
+                minimumSelections: 1,
                 onContinue: next
             )
         case 2:
             SingleChoiceQuestion(
                 title: "How strong is your vocabulary right now?",
-                subtitle: "We will calibrate your first words to the right level.",
+                subtitle: "We'll calibrate your first words to the right level.",
                 options: [
-                    .init(title: "Casual", subtitle: "I know common words and want range", symbol: "leaf.fill"),
-                    .init(title: "Curious", subtitle: "I like learning better words", symbol: "magnifyingglass"),
-                    .init(title: "Advanced", subtitle: "Challenge me with richer language", symbol: "graduationcap.fill")
+                    .init(title: "Casual", symbol: "leaf.fill"),
+                    .init(title: "Curious", symbol: "magnifyingglass"),
+                    .init(title: "Advanced", symbol: "graduationcap.fill")
                 ],
                 selection: $data.level,
                 onContinue: next
             )
         case 3:
-            SingleChoiceQuestion(
+            MultiChoiceQuestion(
                 title: "What usually gets in the way?",
-                subtitle: "Your plan will be built around the obstacle you choose.",
                 options: [
-                    .init(title: "I forget new words", subtitle: "They do not stick long term", symbol: "arrow.counterclockwise"),
-                    .init(title: "I do not use them", subtitle: "I learn words but never say them", symbol: "person.wave.2.fill"),
-                    .init(title: "I lack a routine", subtitle: "I need a daily system", symbol: "calendar.badge.clock"),
-                    .init(title: "I dislike boring lessons", subtitle: "I want learning to feel beautiful", symbol: "wand.and.stars")
+                    .init(title: "I forget them", symbol: "arrow.counterclockwise"),
+                    .init(title: "I don't use them", symbol: "person.wave.2.fill"),
+                    .init(title: "No daily routine", symbol: "calendar.badge.clock"),
+                    .init(title: "Boring lessons", symbol: "wand.and.stars")
                 ],
-                selection: $data.obstacle,
+                selections: $data.obstacles,
+                minimumSelections: 1,
                 onContinue: next
             )
         case 4:
             MultiChoiceQuestion(
-                title: "Choose the topics you care about",
-                subtitle: "Pick a few, or tap Skip to be surprised with a mix.",
+                title: "Choose topics you care about",
+                subtitle: "Pick a few, or let Verbsy surprise you.",
                 options: [
-                    .init(title: "Everyday Life", subtitle: nil, symbol: "cup.and.saucer.fill"),
-                    .init(title: "People & Character", subtitle: nil, symbol: "person.fill"),
-                    .init(title: "Work & Ambition", subtitle: nil, symbol: "briefcase.fill"),
-                    .init(title: "Mind & Ideas", subtitle: nil, symbol: "brain.head.profile"),
-                    .init(title: "Words & Communication", subtitle: nil, symbol: "text.bubble.fill"),
-                    .init(title: "Emotions & Relationships", subtitle: nil, symbol: "heart.fill"),
-                    .init(title: "Science & Nature", subtitle: nil, symbol: "leaf.fill"),
-                    .init(title: "Culture & Society", subtitle: nil, symbol: "building.columns.fill"),
-                    .init(title: "Beautiful & Rare", subtitle: nil, symbol: "sparkles")
+                    .init(title: "Surprise me", subtitle: "All topics, fully mixed", symbol: "sparkles", clearsOtherSelections: true),
+                    .init(title: "Everyday Life", symbol: "cup.and.saucer.fill"),
+                    .init(title: "People", symbol: "person.fill"),
+                    .init(title: "Ambition", symbol: "briefcase.fill"),
+                    .init(title: "Ideas", symbol: "brain.head.profile"),
+                    .init(title: "Communication", symbol: "text.bubble.fill"),
+                    .init(title: "Emotions", symbol: "heart.fill"),
+                    .init(title: "Nature", symbol: "leaf.fill"),
+                    .init(title: "Culture", symbol: "building.columns.fill"),
+                    .init(title: "Rare Words", symbol: "sparkles")
                 ],
                 selections: $data.topics,
                 minimumSelections: 1,
+                allowsEmptySelection: true,
                 onContinue: next
             )
         case 5:
-            SingleChoiceQuestion(
-                title: "Where do you want better words to show up?",
-                subtitle: "This changes the examples and practice prompts you see.",
+            MultiChoiceQuestion(
+                title: "Where should better words show up?",
                 options: [
-                    .init(title: "Conversations", subtitle: "Sound clear in real life", symbol: "bubble.left.and.bubble.right.fill"),
-                    .init(title: "Writing", subtitle: "Upgrade notes, essays, and posts", symbol: "doc.text.fill"),
-                    .init(title: "Work and school", subtitle: "Communicate with confidence", symbol: "briefcase.fill"),
-                    .init(title: "Self-understanding", subtitle: "Name what you feel and think", symbol: "person.crop.circle.badge.checkmark")
+                    .init(title: "Conversations", symbol: "bubble.left.and.bubble.right.fill"),
+                    .init(title: "Writing", symbol: "doc.text.fill"),
+                    .init(title: "Work and school", symbol: "briefcase.fill"),
+                    .init(title: "Self-understanding", symbol: "person.crop.circle.badge.checkmark")
                 ],
-                selection: $data.context,
+                selections: $data.contexts,
+                minimumSelections: 1,
                 onContinue: next
             )
         case 6:
@@ -156,48 +158,40 @@ struct OnboardingView: View {
                 title: "How much time can you give each day?",
                 subtitle: "Verbsy works best when the habit feels effortless.",
                 options: [
-                    .init(title: "1 minute", subtitle: "One word and a quick example", symbol: "timer"),
-                    .init(title: "3 minutes", subtitle: "Word, example, and mini quiz", symbol: "timer.circle.fill"),
-                    .init(title: "5 minutes", subtitle: "Deeper practice and review", symbol: "clock.badge.checkmark.fill")
+                    .init(title: "1 minute", symbol: "timer"),
+                    .init(title: "3 minutes", symbol: "timer.circle.fill"),
+                    .init(title: "5 minutes", symbol: "clock.badge.checkmark.fill")
                 ],
                 selection: $data.dailyTime,
                 onContinue: next
             )
         case 7:
-            ValueInterstitial(
-                title: "Designed to make powerful words stick",
-                subtitle: "Verbsy pairs one memorable word with context, emotion, and a tiny daily review loop.",
-                onContinue: next
-            )
-        case 8:
             DailyLearningPreviewScreen(onContinue: next)
-        case 9:
+        case 8:
             SingleChoiceQuestion(
                 title: "Would you like daily word reminders?",
                 subtitle: "We will use this later to help protect your streak.",
                 options: [
-                    .init(title: "Yes", subtitle: "A gentle daily nudge", symbol: "bell.badge.fill"),
-                    .init(title: "Not yet", subtitle: "I will explore first", symbol: "bell.slash.fill")
+                    .init(title: "Yes", symbol: "bell.badge.fill"),
+                    .init(title: "Not yet", symbol: "bell.slash.fill")
                 ],
                 selection: $data.reminders,
                 onContinue: continueFromReminderChoice
             )
-        case 10:
+        case 9:
             WidgetPreviewScreen(onContinue: next)
-        case 11:
+        case 10:
             GeneratePlanIntro(onContinue: startGenerating)
-        case 12:
+        case 11:
             GeneratingPlanScreen(
-                goal: data.goal,
+                goal: data.primaryGoal,
                 level: data.level,
                 topics: data.topics,
                 isGenerating: $isGenerating,
                 onComplete: next
             )
-        case 13:
+        case 12:
             PlanRevealScreen(data: data, onContinue: next)
-        case 14:
-            SuccessPlanScreen(data: data, onContinue: next)
         default:
             StorePaywallView(
                 canContinueFree: true,
@@ -213,7 +207,7 @@ struct OnboardingView: View {
     }
 
     private var skipHandler: (() -> Void)? {
-        guard (1...10).contains(step) else { return nil }
+        guard (1...9).contains(step) else { return nil }
         return { next() }
     }
 
@@ -229,7 +223,15 @@ struct OnboardingView: View {
         Haptics.selection()
         navigationDirection = .backward
         withAnimation(onboardingStepAnimation) {
-            step = max(0, step - 1)
+            if step == 12 {
+                isGenerating = false
+                step = 10
+            } else {
+                if step == 11 {
+                    isGenerating = false
+                }
+                step = max(0, step - 1)
+            }
         }
     }
 
@@ -306,18 +308,36 @@ private enum NavigationDirection {
 }
 
 private struct OnboardingData {
-    var goal = ""
+    var goals: Set<String> = []
     var level = ""
-    var obstacle = ""
+    var obstacles: Set<String> = []
     var topics: Set<String> = []
-    var context = ""
+    var contexts: Set<String> = []
     var dailyTime = ""
     var reminders = ""
 
+    var primaryGoal: String {
+        preferredValue(from: goals, orderedBy: [
+            "Sound more articulate",
+            "Write with range",
+            "Explain feelings",
+            "Think clearly"
+        ])
+    }
+
+    var primaryContext: String {
+        preferredValue(from: contexts, orderedBy: [
+            "Conversations",
+            "Writing",
+            "Work and school",
+            "Self-understanding"
+        ])
+    }
+
     var recommendedWord: WordRecommendation {
         let advanced = level == "Advanced"
-        let emotional = topics.contains("Emotions") || goal == "Explain feelings clearly"
-        let writing = topics.contains("Writing") || context == "Writing"
+        let emotional = topics.contains("Emotions") || goals.contains("Explain feelings")
+        let writing = contexts.contains("Writing") || goals.contains("Write with range")
 
         if emotional {
             return .init(
@@ -344,6 +364,10 @@ private struct OnboardingData {
             useCase: "Use it when someone's presence feels steady, sharp, and controlled."
         )
     }
+
+    private func preferredValue(from values: Set<String>, orderedBy preference: [String]) -> String {
+        preference.first { values.contains($0) } ?? values.sorted().first ?? ""
+    }
 }
 
 private struct WordRecommendation {
@@ -356,8 +380,9 @@ private struct WordRecommendation {
 private struct ChoiceOption: Identifiable, Hashable {
     let id = UUID()
     let title: String
-    let subtitle: String?
+    var subtitle: String? = nil
     let symbol: String
+    var clearsOtherSelections = false
 }
 
 private struct WelcomeScreen: View {
@@ -397,14 +422,14 @@ private struct WelcomeScreen: View {
 
 private struct SingleChoiceQuestion: View {
     let title: String
-    let subtitle: String
+    var subtitle: String? = nil
     let options: [ChoiceOption]
     @Binding var selection: String
     let onContinue: () -> Void
 
     var body: some View {
         QuestionContainer(title: title, subtitle: subtitle) {
-            VStack(spacing: 14) {
+            VStack(spacing: 10) {
                 ForEach(options) { option in
                     ChoiceTile(
                         option: option,
@@ -427,105 +452,105 @@ private struct SingleChoiceQuestion: View {
 
 private struct MultiChoiceQuestion: View {
     let title: String
-    let subtitle: String
+    var subtitle: String? = nil
     let options: [ChoiceOption]
     @Binding var selections: Set<String>
     let minimumSelections: Int
+    var allowsEmptySelection = false
     let onContinue: () -> Void
+
+    private var canContinue: Bool {
+        selections.count >= minimumSelections || (allowsEmptySelection && selections.isEmpty)
+    }
 
     var body: some View {
         QuestionContainer(title: title, subtitle: subtitle) {
-            VStack(spacing: 14) {
-                ForEach(options) { option in
-                    ChoiceTile(
-                        option: option,
-                        isSelected: selections.contains(option.title),
-                        action: {
-                            Haptics.selection()
-                            withAnimation(.spring(response: 0.32, dampingFraction: 0.86)) {
-                                if selections.contains(option.title) {
-                                    selections.remove(option.title)
-                                } else {
-                                    selections.insert(option.title)
-                                }
-                            }
-                        }
-                    )
+            if options.count > 6 {
+                LazyVGrid(
+                    columns: [
+                        GridItem(.flexible(), spacing: 10),
+                        GridItem(.flexible(), spacing: 10)
+                    ],
+                    spacing: 10
+                ) {
+                    ForEach(options) { option in
+                        ChoiceTile(
+                            option: option,
+                            isSelected: isSelected(option),
+                            isCompact: true,
+                            action: { toggle(option) }
+                        )
+                    }
+                }
+            } else {
+                VStack(spacing: 10) {
+                    ForEach(options) { option in
+                        ChoiceTile(
+                            option: option,
+                            isSelected: isSelected(option),
+                            action: { toggle(option) }
+                        )
+                    }
                 }
             }
         }
         .safeAreaInset(edge: .bottom) {
             PrimaryBottomButton(
-                title: selections.count >= minimumSelections ? "Continue" : "Choose \(minimumSelections)",
-                isEnabled: selections.count >= minimumSelections,
+                title: canContinue ? "Continue" : "Choose \(minimumSelections)",
+                isEnabled: canContinue,
                 action: onContinue
             )
+        }
+    }
+
+    private func isSelected(_ option: ChoiceOption) -> Bool {
+        option.clearsOtherSelections ? selections.isEmpty : selections.contains(option.title)
+    }
+
+    private func toggle(_ option: ChoiceOption) {
+        Haptics.selection()
+        withAnimation(.spring(response: 0.32, dampingFraction: 0.86)) {
+            if option.clearsOtherSelections {
+                selections.removeAll()
+                return
+            }
+            if selections.contains(option.title) {
+                selections.remove(option.title)
+            } else {
+                selections.insert(option.title)
+            }
         }
     }
 }
 
 private struct QuestionContainer<Content: View>: View {
     let title: String
-    let subtitle: String
+    let subtitle: String?
     @ViewBuilder let content: Content
 
     var body: some View {
         ScrollView(showsIndicators: false) {
-            VStack(alignment: .leading, spacing: 32) {
-                VStack(alignment: .leading, spacing: 18) {
+            VStack(alignment: .leading, spacing: 22) {
+                VStack(alignment: .leading, spacing: 9) {
                     Text(title)
-                        .font(VerbsyDesign.display(36))
+                        .font(VerbsyDesign.display(30))
                         .foregroundStyle(AppStyle.ink)
-                        .lineSpacing(-1)
-                        .minimumScaleFactor(0.76)
+                        .lineSpacing(0)
+                        .minimumScaleFactor(0.82)
 
-                    Text(subtitle)
-                        .font(.system(size: 19, weight: .medium, design: .default))
-                        .foregroundStyle(AppStyle.muted)
-                        .lineSpacing(3)
+                    if let subtitle, !subtitle.isEmpty {
+                        Text(subtitle)
+                            .font(.system(size: 15, weight: .medium, design: .default))
+                            .foregroundStyle(AppStyle.muted)
+                            .lineSpacing(2)
+                    }
                 }
-                .padding(.top, 28)
+                .padding(.top, 18)
 
                 content
-                    .padding(.bottom, 110)
+                    .padding(.bottom, 96)
             }
-            .padding(.horizontal, 24)
-        }
-    }
-}
-
-private struct ValueInterstitial: View {
-    let title: String
-    let subtitle: String
-    let onContinue: () -> Void
-
-    var body: some View {
-        VStack(spacing: 0) {
-            Spacer(minLength: 20)
-
-            VStack(spacing: 30) {
-                StickinessChart()
-
-                VStack(spacing: 14) {
-                    Text(title)
-                        .font(VerbsyDesign.display(36))
-                        .foregroundStyle(AppStyle.ink)
-                        .multilineTextAlignment(.center)
-                        .lineSpacing(-1)
-
-                    Text(subtitle)
-                        .font(.system(size: 18, weight: .medium, design: .default))
-                        .foregroundStyle(AppStyle.muted)
-                        .multilineTextAlignment(.center)
-                        .lineSpacing(3)
-                        .padding(.horizontal, 26)
-                }
-            }
-
-            Spacer(minLength: 28)
-        }
-        .safeAreaInset(edge: .bottom) {
-            PrimaryBottomButton(title: "Continue", action: onContinue)
+            .padding(.horizontal, 20)
         }
     }
 }
@@ -717,42 +742,47 @@ private struct GeneratingPlanScreen: View {
     let onComplete: () -> Void
 
     @State private var progress = 0.0
-    @State private var statusText = "Reading your preferences"
+    @State private var activeStage = 0
 
     var body: some View {
-        VStack(spacing: 44) {
-            Spacer(minLength: 80)
+        VStack(spacing: 0) {
+            Spacer(minLength: 36)
 
-            VStack(spacing: 18) {
-                Text("\(Int(progress * 100))%")
-                    .font(VerbsyDesign.display(80))
-                    .foregroundStyle(AppStyle.ink)
+            VStack(spacing: 28) {
+                PlanBuildOrb(progress: progress)
 
-                Text(statusText)
-                    .font(VerbsyDesign.display(33))
-                    .foregroundStyle(AppStyle.ink)
-                    .multilineTextAlignment(.center)
-                    .lineSpacing(-1)
-                    .padding(.horizontal, 22)
+                VStack(spacing: 10) {
+                    Text("Building your word plan")
+                        .font(VerbsyDesign.display(32))
+                        .foregroundStyle(AppStyle.ink)
+                        .multilineTextAlignment(.center)
+
+                    Text(stageText)
+                        .font(.system(size: 16, weight: .semibold, design: .default))
+                        .foregroundStyle(AppStyle.muted)
+                        .multilineTextAlignment(.center)
+                        .lineLimit(2)
+                        .frame(minHeight: 44)
+                        .padding(.horizontal, 12)
+                        .contentTransition(.opacity)
+                }
 
                 ProgressView(value: progress)
                     .tint(AppStyle.sage)
-                    .scaleEffect(x: 1, y: 1.7)
-                    .padding(.horizontal, 32)
-                    .padding(.top, 10)
+                    .scaleEffect(x: 1, y: 1.25)
+                    .padding(.horizontal, 8)
             }
-
-            VStack(alignment: .leading, spacing: 17) {
-                Text("Daily plan includes")
-                    .font(.system(size: 22, weight: .black, design: .default))
-
-                PlanGeneratingRow(text: "Word difficulty calibrated to \(level.isEmpty ? "your level" : level.lowercased())")
-                PlanGeneratingRow(text: "Topics shaped around \(topics.isEmpty ? "your interests" : topics.prefix(2).joined(separator: " and "))")
-                PlanGeneratingRow(text: "Practice prompts for \(goal.isEmpty ? "your goal" : goal.lowercased())")
-                PlanGeneratingRow(text: "A lightweight review loop")
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, 36)
+            .frame(maxWidth: .infinity)
+            .padding(.horizontal, 26)
+            .padding(.vertical, 30)
+            .background(AppStyle.surface)
+            .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 30, style: .continuous)
+                    .stroke(AppStyle.line, lineWidth: 1)
+            )
+            .shadow(color: .black.opacity(0.06), radius: 22, x: 0, y: 12)
+            .padding(.horizontal, 24)
 
             Spacer()
         }
@@ -770,23 +800,64 @@ private struct GeneratingPlanScreen: View {
 
     @MainActor
     private func runGenerationSequence() async {
-        let stages: [(Double, String, UInt64)] = [
-            (0.12, "Reading your preferences", 220_000_000),
-            (0.27, "Calibrating your word level", 360_000_000),
-            (0.44, "Matching topics to your interests", 420_000_000),
-            (0.63, "Building daily practice prompts", 420_000_000),
-            (0.82, "Setting your review rhythm", 360_000_000),
-            (0.94, "Preparing your first word", 260_000_000),
-            (1.0, "Your plan is ready", 300_000_000)
+        let stages: [(Double, UInt64)] = [
+            (0.18, 700_000_000),
+            (0.46, 850_000_000),
+            (0.74, 850_000_000),
+            (1.0, 650_000_000)
         ]
 
-        for stage in stages {
-            statusText = stage.1
-            withAnimation(.easeInOut(duration: 0.34)) {
+        for (index, stage) in stages.enumerated() {
+            withAnimation(.smooth(duration: 0.34, extraBounce: 0)) {
+                activeStage = index
                 progress = stage.0
             }
-            try? await Task.sleep(nanoseconds: stage.2)
+            try? await Task.sleep(nanoseconds: stage.1)
         }
+    }
+
+    private var stageText: String {
+        let focus = topics.sorted().prefix(2).joined(separator: " + ")
+        let stages = [
+            level.isEmpty ? "Choosing the right starting level" : "Tuning your starting level",
+            focus.isEmpty ? "Matching words to your interests" : "Matching words to \(focus)",
+            goal.isEmpty ? "Shaping examples for everyday use" : "Shaping examples for \(goal.lowercased())",
+            "Preparing your first word"
+        ]
+        return stages[min(activeStage, stages.count - 1)]
+    }
+}
+
+private struct PlanBuildOrb: View {
+    let progress: Double
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .fill(AppStyle.sage.opacity(0.12))
+                .frame(width: 178, height: 178)
+
+            Circle()
+                .stroke(AppStyle.line, lineWidth: 12)
+                .frame(width: 142, height: 142)
+
+            Circle()
+                .trim(from: 0, to: progress)
+                .stroke(AppStyle.sage, style: StrokeStyle(lineWidth: 12, lineCap: .round))
+                .frame(width: 142, height: 142)
+                .rotationEffect(.degrees(-90))
+
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .fill(AppStyle.surface)
+                .frame(width: 92, height: 92)
+                .overlay(
+                    Image(systemName: progress >= 1 ? "checkmark.seal.fill" : "text.book.closed.fill")
+                        .font(.system(size: 38, weight: .bold))
+                        .foregroundStyle(progress >= 1 ? AppStyle.sage : AppStyle.ink)
+                )
+                .shadow(color: .black.opacity(0.07), radius: 18, x: 0, y: 10)
+        }
+        .accessibilityHidden(true)
     }
 }
 
@@ -813,9 +884,9 @@ private struct PlanRevealScreen: View {
                 WordPlanCard(word: data.recommendedWord)
 
                 VStack(spacing: 14) {
-                    PlanInfoRow(title: "Goal", value: data.goal.isEmpty ? "Build a stronger vocabulary" : data.goal, symbol: "target")
+                    PlanInfoRow(title: "Goal", value: data.primaryGoal.isEmpty ? "Build a stronger vocabulary" : data.primaryGoal, symbol: "target")
                     PlanInfoRow(title: "Daily pace", value: data.dailyTime.isEmpty ? "3 minutes" : data.dailyTime, symbol: "timer")
-                    PlanInfoRow(title: "Focus", value: data.topics.isEmpty ? "Psychology, writing" : data.topics.sorted().prefix(3).joined(separator: ", "), symbol: "sparkles")
+                    PlanInfoRow(title: "Focus", value: data.topics.isEmpty ? "Surprise me · all topics" : data.topics.sorted().prefix(3).joined(separator: ", "), symbol: "sparkles")
                 }
                 .padding(.bottom, 112)
             }
@@ -823,60 +894,6 @@ private struct PlanRevealScreen: View {
         }
         .safeAreaInset(edge: .bottom) {
             PrimaryBottomButton(title: "Let's get started", action: onContinue)
-        }
-    }
-}
-
-private struct SuccessPlanScreen: View {
-    let data: OnboardingData
-    let onContinue: () -> Void
-
-    var body: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(spacing: 22) {
-                VStack(alignment: .leading, spacing: 16) {
-                    Text("How Verbsy will help you improve")
-                        .font(VerbsyDesign.display(33))
-                        .foregroundStyle(AppStyle.ink)
-
-                    VStack(spacing: 12) {
-                        MethodRow(symbol: "1.circle.fill", title: "Learn one word worth keeping", detail: "No word dumps. One useful word gets the full treatment.")
-                        MethodRow(symbol: "2.circle.fill", title: "See it in real context", detail: "Examples match how you want to write, speak, and think.")
-                        MethodRow(symbol: "3.circle.fill", title: "Review before it fades", detail: "Tiny recall prompts help the word become usable.")
-                        MethodRow(symbol: "4.circle.fill", title: "Build a visible streak", detail: "A premium daily ritual turns vocabulary into momentum.")
-                    }
-                }
-                .padding(20)
-                .background(AppStyle.panel)
-                .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 28, style: .continuous)
-                        .stroke(AppStyle.line, lineWidth: 1)
-                )
-
-                VStack(alignment: .leading, spacing: 16) {
-                    Text("Why Verbsy?")
-                        .font(VerbsyDesign.display(27))
-
-                    ComparisonRow(symbol: "xmark", tint: .red, text: "Random vocabulary lists are hard to remember")
-                    ComparisonRow(symbol: "xmark", tint: .red, text: "Dictionary definitions rarely become daily language")
-                    ComparisonRow(symbol: "checkmark", tint: AppStyle.sage, text: "Verbsy gives you a word, context, and recall loop")
-                    ComparisonRow(symbol: "checkmark", tint: AppStyle.sage, text: "Your plan adapts to \(data.goal.isEmpty ? "your goals" : data.goal.lowercased())")
-                }
-                .padding(20)
-                .background(AppStyle.surface)
-                .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 28, style: .continuous)
-                        .stroke(AppStyle.line, lineWidth: 1)
-                )
-                .padding(.bottom, 112)
-            }
-            .padding(.horizontal, 24)
-            .padding(.top, 24)
-        }
-        .safeAreaInset(edge: .bottom) {
-            PrimaryBottomButton(title: "Continue", action: onContinue)
         }
     }
 }
@@ -1040,45 +1057,43 @@ private struct ProgressHeader: View {
 private struct ChoiceTile: View {
     let option: ChoiceOption
     let isSelected: Bool
+    var isCompact = false
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 18) {
-                ZStack {
-                    Circle()
-                        .fill(isSelected ? AppStyle.ink : .white)
-                        .frame(width: 58, height: 58)
+            HStack(spacing: isCompact ? 9 : 12) {
+                Image(systemName: isSelected ? "checkmark" : option.symbol)
+                    .font(.system(size: isCompact ? 15 : 17, weight: .bold))
+                    .foregroundStyle(isSelected ? AppStyle.ink : AppStyle.sage)
+                    .frame(width: isCompact ? 30 : 34, height: isCompact ? 30 : 34)
+                    .background(isSelected ? AppStyle.surface : AppStyle.sage.opacity(0.12))
+                    .clipShape(Circle())
 
-                    Image(systemName: isSelected ? "checkmark" : option.symbol)
-                        .font(.system(size: 23, weight: .bold))
-                        .foregroundStyle(isSelected ? .white : AppStyle.ink)
-                }
-
-                VStack(alignment: .leading, spacing: 5) {
+                VStack(alignment: .leading, spacing: 3) {
                     Text(option.title)
-                        .font(.system(size: 22, weight: .bold, design: .default))
-                        .foregroundStyle(AppStyle.ink)
-                        .lineLimit(2)
-                        .minimumScaleFactor(0.84)
+                        .font(.system(size: isCompact ? 14.5 : 16, weight: .semibold, design: .default))
+                        .foregroundStyle(isSelected ? .white : AppStyle.ink)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.78)
 
                     if let subtitle = option.subtitle {
                         Text(subtitle)
-                            .font(.system(size: 15.5, weight: .medium, design: .default))
-                            .foregroundStyle(AppStyle.muted)
-                            .lineLimit(2)
+                            .font(.system(size: 13, weight: .medium, design: .default))
+                            .foregroundStyle(isSelected ? .white.opacity(0.72) : AppStyle.muted)
+                            .lineLimit(1)
                     }
                 }
 
                 Spacer()
             }
-            .padding(.horizontal, 18)
-            .frame(minHeight: 92)
-            .background(isSelected ? AppStyle.selectedTile : AppStyle.panel)
-            .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
+            .padding(.horizontal, isCompact ? 10 : 13)
+            .frame(minHeight: isCompact ? 54 : 58)
+            .background(isSelected ? AppStyle.ink : AppStyle.panel)
+            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: 26, style: .continuous)
-                    .stroke(isSelected ? AppStyle.ink : .clear, lineWidth: 1.4)
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .stroke(isSelected ? AppStyle.ink : AppStyle.line.opacity(0.55), lineWidth: 1)
             )
         }
         .buttonStyle(.pressable)
@@ -1104,15 +1119,15 @@ private struct PrimaryBottomButton: View {
                 action()
             }) {
                 Text(title)
-                    .font(.system(size: 21, weight: .black, design: .default))
+                    .font(.system(size: 17, weight: .bold, design: .default))
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
-                    .frame(height: 68)
+                    .frame(height: 56)
                     .background(isEnabled ? AppStyle.sage : AppStyle.disabled)
                     .clipShape(Capsule())
-                    .padding(.horizontal, 24)
-                    .padding(.top, 16)
-                    .padding(.bottom, 12)
+                    .padding(.horizontal, 20)
+                    .padding(.top, 12)
+                    .padding(.bottom, 10)
             }
             .buttonStyle(.pressable)
         }
@@ -1231,50 +1246,6 @@ private struct VerbsyMark: View {
     }
 }
 
-private struct StickinessChart: View {
-    var body: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            Text("Word recall")
-                .font(.system(size: 20, weight: .black, design: .default))
-
-            ZStack(alignment: .bottomLeading) {
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .fill(.white)
-                    .frame(height: 210)
-
-                Path { path in
-                    path.move(to: CGPoint(x: 24, y: 160))
-                    path.addCurve(to: CGPoint(x: 145, y: 108), control1: CGPoint(x: 70, y: 162), control2: CGPoint(x: 96, y: 132))
-                    path.addCurve(to: CGPoint(x: 295, y: 52), control1: CGPoint(x: 198, y: 80), control2: CGPoint(x: 236, y: 58))
-                }
-                .stroke(AppStyle.sage, style: StrokeStyle(lineWidth: 8, lineCap: .round))
-
-                Path { path in
-                    path.move(to: CGPoint(x: 24, y: 72))
-                    path.addCurve(to: CGPoint(x: 145, y: 132), control1: CGPoint(x: 68, y: 72), control2: CGPoint(x: 104, y: 86))
-                    path.addCurve(to: CGPoint(x: 295, y: 168), control1: CGPoint(x: 190, y: 174), control2: CGPoint(x: 240, y: 178))
-                }
-                .stroke(AppStyle.muted.opacity(0.35), style: StrokeStyle(lineWidth: 8, lineCap: .round))
-
-                VStack(alignment: .leading, spacing: 8) {
-                    Label("Verbsy review loop", systemImage: "sparkles")
-                        .font(.system(size: 15, weight: .bold, design: .default))
-                        .foregroundStyle(AppStyle.sage)
-                    Text("Random lists")
-                        .font(.system(size: 15, weight: .bold, design: .default))
-                        .foregroundStyle(AppStyle.muted)
-                }
-                .padding(18)
-            }
-            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-        }
-        .padding(18)
-        .background(AppStyle.panel)
-        .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
-        .padding(.horizontal, 24)
-    }
-}
-
 private struct ProofMetric: View {
     let value: String
     let label: String
@@ -1371,66 +1342,6 @@ private struct PlanInfoRow: View {
             RoundedRectangle(cornerRadius: 24, style: .continuous)
                 .stroke(AppStyle.line, lineWidth: 1)
         )
-    }
-}
-
-private struct MethodRow: View {
-    let symbol: String
-    let title: String
-    let detail: String
-
-    var body: some View {
-        HStack(alignment: .top, spacing: 14) {
-            Image(systemName: symbol)
-                .font(.system(size: 24, weight: .bold))
-                .foregroundStyle(AppStyle.ink)
-                .frame(width: 36)
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text(title)
-                    .font(.system(size: 19, weight: .black, design: .default))
-                    .foregroundStyle(AppStyle.ink)
-                Text(detail)
-                    .font(.system(size: 15, weight: .medium, design: .default))
-                    .foregroundStyle(AppStyle.muted)
-                    .lineSpacing(2)
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(16)
-        .background(AppStyle.surface)
-        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-    }
-}
-
-private struct ComparisonRow: View {
-    let symbol: String
-    let tint: Color
-    let text: String
-
-    var body: some View {
-        HStack(alignment: .top, spacing: 13) {
-            Image(systemName: symbol)
-                .font(.system(size: 20, weight: .black))
-                .foregroundStyle(tint)
-                .frame(width: 28, height: 28)
-
-            Text(text)
-                .font(.system(size: 18, weight: .medium, design: .default))
-                .foregroundStyle(AppStyle.ink)
-                .lineSpacing(2)
-        }
-    }
-}
-
-private struct PlanGeneratingRow: View {
-    let text: String
-
-    var body: some View {
-        Label(text, systemImage: "checkmark.circle.fill")
-            .font(.system(size: 18, weight: .semibold, design: .default))
-            .foregroundStyle(AppStyle.ink)
-            .labelStyle(.titleAndIcon)
     }
 }
 

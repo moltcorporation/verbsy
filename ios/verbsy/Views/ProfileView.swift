@@ -41,7 +41,7 @@ struct ProfileView: View {
                     SettingsSection(title: "Daily habit") {
                         gatedRow(.notifications, symbol: "bell.fill", title: "Word of the day", detail: purchases.isPro ? "A push notification each morning" : "Verbsy Pro")
                         rowDivider
-                        navRow(.widgets, symbol: "rectangle.on.rectangle.angled", title: "Home Screen widgets", detail: "A word on your Home & Lock Screen")
+                        gatedRow(.widgets, symbol: "rectangle.on.rectangle.angled", title: "Home Screen widgets", detail: purchases.isPro ? "A word on your Home & Lock Screen" : "Verbsy Pro")
                     }
 
                     SettingsSection(title: "Verbsy Pro") {
@@ -129,15 +129,12 @@ struct ProfileView: View {
     }
 
     private var difficultyDetail: String {
-        let labels = prefs.difficulties.map { d -> String in
-            switch d {
-            case "casual": return "Everyday"
-            case "curious": return "Curious"
-            case "advanced": return "Advanced"
-            default: return d.capitalized
-            }
+        switch prefs.difficultyLevel {
+        case "casual": return "Everyday"
+        case "curious": return "Curious"
+        case "advanced": return "Advanced"
+        default: return "Advanced"
         }
-        return labels.isEmpty ? "All levels" : labels.joined(separator: ", ")
     }
 
     private var rowDivider: some View {
@@ -378,10 +375,10 @@ private struct DifficultyPickerView: View {
                     .padding(.bottom, 4)
 
                 ForEach(levels, id: \.id) { level in
-                    let on = prefs.difficulties.contains(level.id)
+                    let on = prefs.difficultyLevel == level.id
                     Button {
                         Haptics.selection()
-                        prefs.toggleDifficulty(level.id)
+                        prefs.setDifficultyLevel(level.id)
                     } label: {
                         HStack(spacing: 12) {
                             VStack(alignment: .leading, spacing: 3) {
@@ -427,8 +424,9 @@ private struct WidgetsHelpView: View {
                 stepRow(1, "Touch and hold your Home Screen until the apps jiggle.")
                 stepRow(2, "Tap the + in the top corner, then search for “Verbsy.”")
                 stepRow(3, "Choose a size, add it, and tap Done.")
+                stepRow(4, "Touch and hold the widget, tap Edit Widget, then choose how often the word changes.")
 
-                Text("Everyone gets a daily word widget. Verbsy Pro unlocks all themes and faster word rotation (every 3, 6, or 12 hours).")
+                Text("Verbsy Pro unlocks Home Screen and Lock Screen widgets, all themes, and rotation options from every hour to once a day. New widgets default to every 3 hours.")
                     .font(.system(size: 15, weight: .medium, design: .default))
                     .foregroundStyle(VerbsyDesign.muted)
                     .padding(.top, 4)
@@ -639,12 +637,15 @@ private struct SubscriptionView: View {
             VStack(alignment: .leading, spacing: 16) {
                 if purchases.isPro {
                     EmptyStateCard(symbol: "checkmark.seal.fill", title: "Verbsy Pro is active", detail: "Thank you for supporting Verbsy. Widgets and daily words are unlocked.")
-                    Link(destination: URL(string: "https://apps.apple.com/account/subscriptions")!) {
+                    Button {
+                        Task { await purchases.manageSubscriptions() }
+                    } label: {
                         SettingsRowContent(symbol: "person.crop.circle", title: "Manage subscription", detail: "Open Apple subscription settings.")
                             .background(VerbsyDesign.surface)
                             .clipShape(RoundedRectangle(cornerRadius: VerbsyDesign.radiusTile, style: .continuous))
                             .overlay(RoundedRectangle(cornerRadius: VerbsyDesign.radiusTile, style: .continuous).stroke(VerbsyDesign.line))
                     }
+                    .buttonStyle(.pressable)
                 } else {
                     EmptyStateCard(symbol: "sparkles", title: "Verbsy Pro", detail: "Unlock Home Screen widgets and word-of-the-day notifications. The feed and quizzes stay free.")
                     Button {

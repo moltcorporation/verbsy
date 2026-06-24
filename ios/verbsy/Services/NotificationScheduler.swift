@@ -3,7 +3,8 @@ import UserNotifications
 
 enum NotificationScheduler {
     private static let center = UNUserNotificationCenter.current()
-    private static let idPrefix = "verbsy.word."
+    private static let wordIdPrefix = "verbsy.word."
+    private static let trialReminderId = "verbsy.trial.endsSoon"
 
     /// Ask for permission. Safe to call from onboarding; returns whether granted.
     @discardableResult
@@ -35,7 +36,7 @@ enum NotificationScheduler {
         if pool.isEmpty { pool = VerbsyCatalog.words }
         guard !pool.isEmpty else { return }
 
-        center.removeAllPendingNotificationRequests()
+        cancelWordReminders()
 
         let perDay = max(1, min(perDay, 5))
         let times = reminderTimes(startHour: startHour, startMinute: startMinute, perDay: perDay)
@@ -66,15 +67,39 @@ enum NotificationScheduler {
                 content.sound = .default
 
                 let trigger = UNCalendarNotificationTrigger(dateMatching: comps, repeats: false)
-                let request = UNNotificationRequest(identifier: "\(idPrefix)\(scheduled)", content: content, trigger: trigger)
+                let request = UNNotificationRequest(identifier: "\(wordIdPrefix)\(scheduled)", content: content, trigger: trigger)
                 try? await center.add(request)
                 scheduled += 1
             }
         }
     }
 
+    /// Schedule a one-time reminder shortly before the free trial ends. This uses
+    /// the StoreKit transaction expiration date, so sandbox renewals may be too
+    /// accelerated to schedule a meaningful reminder.
+    static func scheduleTrialEndingReminder(expirationDate: Date) async {
+        let reminderDate = Calendar.current.date(byAdding: .day, value: -1, to: expirationDate) ?? expirationDate
+        let now = Date()
+        guard reminderDate > now.addingTimeInterval(60) else { return }
+
+        let granted = await requestAuthorization()
+        guard granted else { return }
+
+        center.removePendingNotificationRequests(withIdentifiers: [trialReminderId])
+
+        let content = UNMutableNotificationContent()
+        content.title = "Your Verbsy Pro trial ends tomorrow"
+        content.body = "Cancel anytime in Apple subscription settings before the trial ends."
+        content.sound = .default
+
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: reminderDate.timeIntervalSince(now), repeats: false)
+        let request = UNNotificationRequest(identifier: trialReminderId, content: content, trigger: trigger)
+        try? await center.add(request)
+    }
+
     static func cancelWordReminders() {
-        center.removeAllPendingNotificationRequests()
+        let identifiers = (0..<160).map { "\(wordIdPrefix)\($0)" }
+        center.removePendingNotificationRequests(withIdentifiers: identifiers)
     }
 
     /// Evenly spread `perDay` reminders from the start time toward ~9pm.

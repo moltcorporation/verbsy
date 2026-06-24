@@ -35,13 +35,14 @@ final class VerbsyContentStore: ObservableObject {
     }
 
     /// Refresh the on-device daily word and sync it to the widget.
-    func refresh() async {
-        todayWord = VerbsyCatalog.todayWord
+    func refresh(topics: [String] = [], difficulties: [String] = PreferencesStore.allDifficulties) async {
+        todayWord = VerbsyCatalog.todayWord(topics: topics, difficulties: difficulties)
         WidgetBridge.write(word: todayWord)
     }
 
     /// Push the widget's rotation pool (respecting the user's topics/difficulty).
     func syncWidget(topics: [String], difficulties: [String]) {
+        todayWord = VerbsyCatalog.todayWord(topics: topics, difficulties: difficulties)
         let rotation = VerbsyCatalog.feedPage(topics: topics, difficulties: difficulties, seed: "widget-rotation", offset: 0, limit: 40)
         WidgetBridge.write(words: rotation.isEmpty ? Array(VerbsyCatalog.words.prefix(40)) : rotation)
         WidgetBridge.write(word: todayWord)

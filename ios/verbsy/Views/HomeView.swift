@@ -66,8 +66,8 @@ struct HomeView: View {
                             HomeTile(symbol: "square.grid.2x2.fill", title: "Topics", value: nil, locked: false) {
                                 path.append(.topics)
                             }
-                            HomeTile(symbol: "rectangle.on.rectangle.angled", title: "Widgets", value: nil, locked: false) {
-                                path.append(.widgets)
+                            HomeTile(symbol: "rectangle.on.rectangle.angled", title: "Widgets", value: nil, locked: !purchases.isPro) {
+                                if purchases.isPro { path.append(.widgets) } else { showPaywall = true }
                             }
                             HomeTile(symbol: "bell.fill", title: "Daily word", value: nil, locked: !purchases.isPro) {
                                 if purchases.isPro { path.append(.notifications) } else { showPaywall = true }

@@ -1,13 +1,13 @@
 import Foundation
 import Combine
 import StoreKit
+import UIKit
 
 @MainActor
 final class PurchaseManager: ObservableObject {
-    static let productIds = [
-        "verbsy.pro.annual",
-        "verbsy.pro.monthly",
-    ]
+    static let annualProductId = "verbsy.pro.annual"
+    static let monthlyProductId = "verbsy.pro.monthly"
+    static let productIds = [annualProductId, monthlyProductId]
 
     @Published private(set) var products: [Product] = []
     @Published private(set) var isPro = false
@@ -31,28 +31,39 @@ final class PurchaseManager: ObservableObject {
     }
 
     var annualProduct: Product? {
-        products.first { $0.id == "verbsy.pro.annual" }
+        products.first { $0.id == Self.annualProductId }
     }
 
-    func loadProducts() async {
-        if products.isEmpty {
+    func loadProducts(force: Bool = false) async {
+        guard !isLoadingProducts else { return }
+        guard force || products.isEmpty else { return }
+
+        if products.isEmpty || force {
             isLoadingProducts = true
         }
         defer { isLoadingProducts = false }
 
         do {
-            products = try await Product.products(for: Self.productIds)
+            let fetchedProducts = try await Product.products(for: Self.productIds)
                 .sorted { lhs, rhs in
                     let left = Self.productIds.firstIndex(of: lhs.id) ?? 0
                     let right = Self.productIds.firstIndex(of: rhs.id) ?? 0
                     return left < right
                 }
-            if products.isEmpty {
+            products = fetchedProducts
+
+            if fetchedProducts.isEmpty {
 #if DEBUG
-                statusMessage = "Local StoreKit products are not active for this run."
+                statusMessage = "No StoreKit products were returned. Check the scheme StoreKit configuration or test with TestFlight/App Store sandbox."
 #else
-                statusMessage = "Subscription options are loading. Please try again in a moment."
+                statusMessage = "Subscription options are temporarily unavailable. Please try again."
 #endif
+            } else if fetchedProducts.count != Self.productIds.count {
+                let returnedIds = Set(fetchedProducts.map(\.id))
+                let missingIds = Self.productIds.filter { !returnedIds.contains($0) }
+                statusMessage = "Some subscription options are unavailable: \(missingIds.joined(separator: ", "))."
+            } else {
+                statusMessage = nil
             }
         } catch {
             statusMessage = "Subscription options are unavailable: \(error.localizedDescription)"
@@ -63,11 +74,17 @@ final class PurchaseManager: ObservableObject {
         isPurchasing = true
         defer { isPurchasing = false }
 
+        MetaEventLogger.logSubscriptionCheckoutStarted(product: product)
+
         do {
             let result = try await product.purchase()
             switch result {
             case .success(let verification):
                 let transaction = try checkVerified(verification)
+                MetaEventLogger.logSubscriptionCompleted(product: product, transaction: transaction)
+                if let expirationDate = transaction.expirationDate {
+                    await NotificationScheduler.scheduleTrialEndingReminder(expirationDate: expirationDate)
+                }
                 await transaction.finish()
                 await refreshEntitlements()
                 statusMessage = "Verbsy Pro is unlocked."
@@ -76,9 +93,11 @@ final class PurchaseManager: ObservableObject {
             case .pending:
                 statusMessage = "Purchase pending approval."
             @unknown default:
+                MetaEventLogger.logSubscriptionFailed(productId: product.id)
                 statusMessage = "Purchase could not be completed."
             }
         } catch {
+            MetaEventLogger.logSubscriptionFailed(productId: product.id)
             statusMessage = "Purchase failed. Please try again."
         }
     }
@@ -90,6 +109,21 @@ final class PurchaseManager: ObservableObject {
             statusMessage = isPro ? "Purchases restored." : "No active Verbsy Pro purchase found."
         } catch {
             statusMessage = "Restore failed. Please try again."
+        }
+    }
+
+    func manageSubscriptions() async {
+        guard let scene = UIApplication.shared.connectedScenes
+            .compactMap({ $0 as? UIWindowScene })
+            .first(where: { $0.activationState == .foregroundActive }) else {
+            statusMessage = "Subscription settings are unavailable right now."
+            return
+        }
+
+        do {
+            try await AppStore.showManageSubscriptions(in: scene)
+        } catch {
+            statusMessage = "Could not open subscription settings. Please try again."
         }
     }
 

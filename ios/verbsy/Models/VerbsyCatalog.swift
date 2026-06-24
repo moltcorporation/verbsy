@@ -16,6 +16,13 @@ enum VerbsyCatalog {
         return words[day % words.count]
     }
 
+    static func todayWord(topics: [String], difficulties: [String], date: Date = Date()) -> VerbsyWord {
+        let day = Calendar.current.ordinality(of: .day, in: .era, for: date) ?? 0
+        let pool = orderedPool(topics: topics, difficulties: difficulties, seed: "today-\(day)")
+        guard !pool.isEmpty else { return todayWord }
+        return pool[day % pool.count]
+    }
+
     static func filtered(topics: [String], difficulties: [String]) -> [VerbsyWord] {
         words.filter { word in
             let topicOk = topics.isEmpty || !Set(word.topics).isDisjoint(with: topics)
@@ -26,10 +33,7 @@ enum VerbsyCatalog {
 
     /// Deterministically shuffled local page — mirrors the server feed for offline use.
     static func feedPage(topics: [String], difficulties: [String], seed: String, offset: Int, limit: Int) -> [VerbsyWord] {
-        let pool = filtered(topics: topics, difficulties: difficulties)
-            .sorted { lhs, rhs in
-                stableHash(lhs.slug + seed) < stableHash(rhs.slug + seed)
-            }
+        let pool = orderedPool(topics: topics, difficulties: difficulties, seed: seed)
         guard offset < pool.count else { return [] }
         return Array(pool[offset..<min(offset + limit, pool.count)])
     }
@@ -57,6 +61,39 @@ enum VerbsyCatalog {
             hash = hash &* 0x100000001b3
         }
         return hash
+    }
+
+    private static func orderedPool(topics: [String], difficulties: [String], seed: String) -> [VerbsyWord] {
+        guard !difficulties.isEmpty else {
+            return filtered(topics: topics, difficulties: difficulties)
+                .sorted { stableHash($0.slug + seed) < stableHash($1.slug + seed) }
+        }
+
+        var seen = Set<String>()
+        var ordered: [VerbsyWord] = []
+        let minimumVariety = 40
+
+        for difficulty in difficulties {
+            let bucket = filtered(topics: topics, difficulties: [difficulty])
+                .sorted { stableHash($0.slug + seed) < stableHash($1.slug + seed) }
+            for word in bucket where seen.insert(word.slug).inserted {
+                ordered.append(word)
+            }
+        }
+
+        if !topics.isEmpty, ordered.count < minimumVariety {
+            for difficulty in difficulties {
+                let fallbackBucket = filtered(topics: [], difficulties: [difficulty])
+                    .sorted { stableHash($0.slug + seed) < stableHash($1.slug + seed) }
+                for word in fallbackBucket where seen.insert(word.slug).inserted {
+                    ordered.append(word)
+                    if ordered.count >= minimumVariety { break }
+                }
+                if ordered.count >= minimumVariety { break }
+            }
+        }
+
+        return ordered
     }
 
     private static func loadBundled() -> [VerbsyWord] {
