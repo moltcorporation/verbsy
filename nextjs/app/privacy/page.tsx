@@ -22,17 +22,10 @@ export default function PrivacyPage() {
           your full payment card details from Apple.
         </p>
         <p>
-          Verbsy uses the Meta SDK in the iOS app to measure app installs,
-          launches, onboarding completion, and subscription events so we can
-          understand ad performance and improve our campaigns. Meta may receive
-          device identifiers and app event information such as checkout starts,
-          trial starts, or subscription purchases, subject to Apple permissions
-          and your device settings.
-        </p>
-        <p>
-          Verbsy does not sell personal information. We do not send Meta your
-          name, email address, phone number, full payment card details, saved
-          words, quiz answers, or notification preferences.
+          Verbsy does not sell personal information and does not use
+          third-party advertising SDKs in the iOS app. We do not send third
+          parties your name, email address, phone number, full payment card
+          details, saved words, quiz answers, or notification preferences.
         </p>
         <p>
           You can revoke notification permission in iOS Settings. You can delete

@@ -34,7 +34,6 @@ struct AppRootView: View {
             } else {
                 OnboardingView(
                     onCompleted: { wantsReminder, topics, level in
-                        MetaEventLogger.logCompletedOnboarding()
                         wantsReminders = wantsReminder
                         prefs.setTopics(topics)
                         prefs.applyLevel(level)

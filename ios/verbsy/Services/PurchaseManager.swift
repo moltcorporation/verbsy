@@ -74,14 +74,11 @@ final class PurchaseManager: ObservableObject {
         isPurchasing = true
         defer { isPurchasing = false }
 
-        MetaEventLogger.logSubscriptionCheckoutStarted(product: product)
-
         do {
             let result = try await product.purchase()
             switch result {
             case .success(let verification):
                 let transaction = try checkVerified(verification)
-                MetaEventLogger.logSubscriptionCompleted(product: product, transaction: transaction)
                 if let expirationDate = transaction.expirationDate {
                     await NotificationScheduler.scheduleTrialEndingReminder(expirationDate: expirationDate)
                 }
@@ -93,11 +90,9 @@ final class PurchaseManager: ObservableObject {
             case .pending:
                 statusMessage = "Purchase pending approval."
             @unknown default:
-                MetaEventLogger.logSubscriptionFailed(productId: product.id)
                 statusMessage = "Purchase could not be completed."
             }
         } catch {
-            MetaEventLogger.logSubscriptionFailed(productId: product.id)
             statusMessage = "Purchase failed. Please try again."
         }
     }
